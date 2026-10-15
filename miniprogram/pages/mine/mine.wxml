@@ -1,0 +1,96 @@
+<view class="page page--with-tabbar theme-{{theme}}">
+  <nav-bar mode="plain" />
+
+  <view class="page__content">
+
+    <!-- ============ 用户卡 ============ -->
+    <view class="profile">
+      <view class="profile__avatar" bindtap="onEditProfile">
+        <image
+          wx:if="{{user.avatarUrl}}"
+          class="profile__avatar-img"
+          src="{{user.avatarUrl}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="profile__avatar-ph">{{user.nickname ? user.nickname[0] : '小'}}</view>
+      </view>
+
+      <view class="profile__main">
+        <view class="profile__name" bindtap="onEditProfile">
+          {{user.nickname || '小朋友'}}
+        </view>
+        <view class="profile__meta">
+          <text wx:if="{{user.grade}}">{{user.grade}}年级</text>
+          <text wx:if="{{user.grade && user.textbookId}}"> · </text>
+          <text wx:if="{{user.textbookId}}">已选教材</text>
+          <text wx:if="{{!user.grade && !user.textbookId}}">点这里完善资料</text>
+        </view>
+      </view>
+
+      <quota-chip left="{{quotaLeft}}" low="{{quotaLow}}" />
+    </view>
+
+    <!-- ============ 数据概览 ============ -->
+    <view class="stats">
+      <view class="stats__item">
+        <view class="stats__num">{{stats.homework}}</view>
+        <view class="stats__label">批改记录</view>
+      </view>
+      <view class="stats__line"></view>
+      <view class="stats__item">
+        <view class="stats__num">{{stats.mistake}}</view>
+        <view class="stats__label">待巩固错题</view>
+      </view>
+      <view class="stats__line"></view>
+      <view class="stats__item">
+        <view class="stats__num">{{quotaLeft < 0 ? '∞' : quotaLeft}}</view>
+        <view class="stats__label">剩余额度</view>
+      </view>
+    </view>
+
+    <!-- ============ 设置项 ============ -->
+    <view class="group" wx:for="{{groups}}" wx:for-item="group" wx:key="key">
+      <view class="group__title">{{group.title}}</view>
+
+      <view class="group__card">
+        <!-- 深色模式行用原生 switch -->
+        <block wx:for="{{group.items}}" wx:for-item="item" wx:key="key">
+          <view wx:if="{{item.action === 'theme'}}" class="theme-row">
+            <view class="theme-row__main">
+              <view class="theme-row__text">
+                <view class="theme-row__title">{{item.title}}</view>
+                <view class="theme-row__desc">{{item.desc}}</view>
+              </view>
+            </view>
+            <switch
+              checked="{{isDark}}"
+              color="#FFC857"
+              bindchange="onToggleTheme"
+            />
+          </view>
+
+          <list-item
+            wx:else
+            icon="{{item.icon}}"
+            icon-color="{{item.iconColor}}"
+            icon-bg="{{item.iconBg}}"
+            title="{{item.title}}"
+            desc="{{item.desc}}"
+            value="{{item.value}}"
+            arrow="{{item.arrow !== false}}"
+            data-action="{{item.action}}"
+            bind:tap="onItemTap"
+          />
+        </block>
+      </view>
+    </view>
+
+    <!-- ============ 退出 ============ -->
+    <view class="logout" hover-class="logout--active" bindtap="onLogout">退出登录</view>
+
+    <view class="version">小学生同步学习 · v1.0.0</view>
+
+  </view>
+
+  <tab-bar current="{{tabIndex}}" />
+</view>

@@ -1,0 +1,18 @@
+<view class="nav {{bordered ? 'nav--bordered' : ''}}"
+      style="background: {{background}};">
+  <!-- 状态栏占位 -->
+  <view class="nav__status" style="height: {{statusBarHeight}}px;">
+    <view class="nav__time">{{timeText}}</view>
+  </view>
+
+  <!-- 标题栏 -->
+  <view wx:if="{{mode === 'title'}}" class="nav__bar" style="height: {{navBarHeight}}px;">
+    <view wx:if="{{showBack}}" class="nav__back" hover-class="nav__back--active" bindtap="onBack">
+      <view class="nav__arrow"></view>
+    </view>
+    <view class="nav__title">{{title}}</view>
+    <view class="nav__right">
+      <slot name="right"></slot>
+    </view>
+  </view>
+</view>

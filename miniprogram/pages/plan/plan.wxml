@@ -1,0 +1,89 @@
+<view class="page page--with-tabbar theme-{{theme}}">
+  <nav-bar mode="plain" />
+
+  <view class="page__content">
+
+    <view class="head">
+      <view class="head__title">今天的学习计划</view>
+      <view class="head__sub">只有 {{plan.total}} 件事，做完就可以放心玩了</view>
+    </view>
+
+    <skeleton wx:if="{{loading}}" rows="{{3}}" />
+
+    <block wx:else>
+
+      <!-- ============ 今日进度 ============ -->
+      <view class="today">
+        <view class="today__row">
+          <view class="today__left">
+            <view class="today__num">{{plan.done}}<text class="today__slash">/{{plan.total}}</text></view>
+            <view class="today__label">已完成</view>
+          </view>
+          <view class="today__percent">{{plan.percent}}%</view>
+        </view>
+        <view class="today__track">
+          <view class="today__fill" style="width: {{plan.percent}}%;"></view>
+        </view>
+      </view>
+
+      <!-- ============ 任务列表 ============ -->
+      <view class="tasks">
+        <view
+          wx:for="{{plan.tasks}}"
+          wx:key="id"
+          class="task {{item.done ? 'task--done' : ''}}"
+        >
+          <view
+            class="task__check {{item.done ? 'task__check--on' : ''}}"
+            data-id="{{item.id}}"
+            data-done="{{item.done}}"
+            catchtap="onToggle"
+          >
+            <view class="task__tick" wx:if="{{item.done}}"></view>
+          </view>
+
+          <view
+            class="task__body"
+            data-type="{{item.type}}"
+            data-done="{{item.done}}"
+            bindtap="onTaskTap"
+          >
+            <view class="task__icon" style="background: {{item.bg}};">
+              <image class="task__icon-img" src="{{item.icon}}" mode="aspectFit" />
+            </view>
+            <view class="task__main">
+              <view class="task__title">{{item.title}}</view>
+              <view class="task__meta">{{item.typeName}}{{item.done ? ' · 已完成' : ''}}</view>
+            </view>
+            <view class="task__arrow" wx:if="{{!item.done}}"></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ============ 本周 ============ -->
+      <view class="week">
+        <view class="week__head">
+          <view class="week__title">本周坚持情况</view>
+          <view class="week__rate">完成率 {{week.rate}}%</view>
+        </view>
+
+        <view class="week__chart">
+          <view wx:for="{{weekBars}}" wx:key="label" class="week__col">
+            <view class="week__bar-wrap">
+              <view class="week__bar" style="height: {{item.height}}%;"></view>
+            </view>
+            <view class="week__label">{{item.label}}</view>
+          </view>
+        </view>
+
+        <view class="week__foot">
+          本周共完成 {{week.done}} / {{week.total}} 件事
+        </view>
+      </view>
+
+    </block>
+
+  </view>
+
+  <tab-bar current="{{tabIndex}}" />
+</view>

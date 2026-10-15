@@ -1,0 +1,4 @@
+<view class="sk">
+  <view class="sk__hero" wx:if="{{hero}}"></view>
+  <view class="sk__row" wx:for="{{rows}}" wx:key="*this"></view>
+</view>

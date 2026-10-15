@@ -1,0 +1,37 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: 24rpx;
+  background: var(--brand-light);
+  box-sizing: border-box;
+}
+
+.chip--active {
+  opacity: 0.8;
+}
+
+/* 额度紧张：换成珊瑚色警示 */
+.chip--low {
+  background: var(--coral-light);
+}
+
+.chip__icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.chip__text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--brand-deep);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chip--low .chip__text {
+  color: var(--coral);
+}

@@ -1,0 +1,348 @@
+/* ============ 课文答题 —— 设计稿 03 ============ */
+
+.page {
+  padding-bottom: 200rpx;
+}
+
+/* ---------- 进度 ---------- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0 var(--space-lg);
+}
+
+.bar__text {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.bar__track {
+  flex: 1;
+  height: 16rpx;
+  border-radius: 8rpx;
+  background: var(--progress-track);
+  overflow: hidden;
+}
+
+.bar__fill {
+  height: 100%;
+  border-radius: 8rpx;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+/* ---------- 题干 ---------- */
+.q {
+  padding: 32rpx 30rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.q__stem {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ---------- 选项 ---------- */
+.options {
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 28rpx 26rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 3rpx solid transparent;
+  box-shadow: var(--shadow-soft);
+  box-sizing: border-box;
+}
+
+.option--hover {
+  opacity: 0.85;
+}
+
+.option--active {
+  border-color: var(--brand);
+  background: var(--brand-light);
+}
+
+.option__letter {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.option--active .option__letter {
+  background: var(--brand);
+  color: var(--text-on-brand);
+}
+
+.option__text {
+  flex: 1;
+  font-size: 30rpx;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ---------- 填空 ---------- */
+.fill {
+  margin-top: var(--space-lg);
+  padding: 32rpx 30rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.fill__input {
+  height: 100rpx;
+  padding: 0 26rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  border: 2rpx solid var(--border);
+  font-size: 32rpx;
+  color: var(--text-primary);
+}
+
+.fill__ph {
+  color: var(--text-quaternary);
+  font-size: 30rpx;
+}
+
+.fill__hint {
+  margin-top: var(--space-md);
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+/* ---------- 结果 ---------- */
+.result {
+  margin-top: var(--space-sm);
+  padding: 48rpx 32rpx;
+  border-radius: var(--radius-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(160deg, #FFF4DC 0%, #FFE7B8 100%);
+  box-shadow: var(--shadow-card);
+}
+
+.result--good { background: linear-gradient(160deg, #EDF8F1 0%, #D6F0E0 100%); }
+.result--mid { background: linear-gradient(160deg, #FFF4DC 0%, #FFE7B8 100%); }
+.result--bad { background: linear-gradient(160deg, #FFF1ED 0%, #FFDDD6 100%); }
+
+.result__score {
+  font-size: 128rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.result__unit {
+  margin-top: 4rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.result__line {
+  margin-top: var(--space-md);
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.result__tip {
+  margin-top: 8rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ---------- 逐题回顾 ---------- */
+.review {
+  margin-top: var(--space-2xl);
+}
+
+.review__title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.item {
+  margin-bottom: var(--space-md);
+  padding: 28rpx 26rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border-left: 8rpx solid var(--grass);
+  box-shadow: var(--shadow-soft);
+}
+
+.item--wrong {
+  border-left-color: var(--coral);
+}
+
+.item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.item__seq {
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.item__badge {
+  height: 40rpx;
+  padding: 0 16rpx;
+  border-radius: 20rpx;
+  background: var(--grass-light);
+  color: var(--grass);
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.item--wrong .item__badge {
+  background: var(--coral-light);
+  color: var(--coral);
+}
+
+.item__stem {
+  margin-top: 14rpx;
+  font-size: 30rpx;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+
+.item__row {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: 14rpx;
+}
+
+.item__label {
+  width: 130rpx;
+  flex-shrink: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+.item__value {
+  flex: 1;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.item__value--wrong {
+  color: var(--coral);
+  text-decoration: line-through;
+}
+
+.item__value--right {
+  color: var(--grass);
+  font-weight: 600;
+}
+
+.item__analysis {
+  margin-top: 16rpx;
+  padding: 20rpx 22rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ---------- 结果页操作 ---------- */
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-2xl);
+}
+
+.actions .btn {
+  flex: 1;
+}
+
+/* ---------- 底部操作条 ---------- */
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 20rpx var(--space-xl) calc(20rpx + env(safe-area-inset-bottom));
+  background: var(--bg-canvas);
+  border-top: 1rpx solid var(--border-light);
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+.footer__prev {
+  height: 96rpx;
+  padding: 0 44rpx;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  border: 2rpx solid var(--border);
+  color: var(--text-secondary);
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer__prev--active {
+  opacity: 0.75;
+}
+
+.footer__spacer {
+  width: 0;
+}
+
+.footer__next {
+  flex: 1;
+  height: 96rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: 32rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer__next--active {
+  opacity: 0.86;
+}
+
+.footer__next--disabled {
+  opacity: 0.45;
+}

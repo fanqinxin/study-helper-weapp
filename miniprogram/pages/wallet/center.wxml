@@ -1,0 +1,109 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="额度中心" />
+
+  <view class="page__content">
+
+    <!-- ============ 余额卡 ============ -->
+    <view class="balance">
+      <view class="balance__head">
+        <view class="balance__label">AI 批改剩余次数</view>
+        <view class="balance__badge" wx:if="{{balance.monthly}}">月卡不限次</view>
+      </view>
+
+      <view class="balance__num">
+        {{balance.monthly ? '不限' : balance.totalLeft}}
+        <text class="balance__unit" wx:if="{{!balance.monthly}}">次</text>
+      </view>
+
+      <view class="balance__detail" wx:if="{{!balance.monthly}}">
+        <view class="balance__cell">
+          <view class="balance__cell-num">{{balance.freeLeft}}</view>
+          <view class="balance__cell-label">免费额度</view>
+        </view>
+        <view class="balance__cell">
+          <view class="balance__cell-num">{{balance.paidBalance}}</view>
+          <view class="balance__cell-label">加油包余量</view>
+        </view>
+        <view class="balance__cell">
+          <view class="balance__cell-num">{{balance.freeTotal}}</view>
+          <view class="balance__cell-label">每周期赠送</view>
+        </view>
+      </view>
+
+      <view class="balance__reset" wx:if="{{!balance.monthly && resetText}}">
+        免费额度将在 {{resetText}} 重置，未用完不累积
+      </view>
+    </view>
+
+    <!-- ============ 消耗说明 ============ -->
+    <view class="rules">
+      <view class="rules__title">关于额度，先把规则说清楚</view>
+
+      <view class="rules__row">
+        <view class="rules__tag rules__tag--bad">消耗</view>
+        <view class="rules__text">上传作业给 AI 批改、识别自定义教材目录</view>
+      </view>
+      <view class="rules__row">
+        <view class="rules__tag rules__tag--good">不消耗</view>
+        <view class="rules__text">课文练习（本地判分）、错题本、学习计划、小游戏</view>
+      </view>
+      <view class="rules__row">
+        <view class="rules__tag rules__tag--good">自动退</view>
+        <view class="rules__text">批改失败会立刻退还，可在下方流水里核对</view>
+      </view>
+    </view>
+
+    <!-- ============ 加油包 ============ -->
+    <view class="section">
+      <view class="section__title">想多用几次</view>
+
+      <view class="packs">
+        <view
+          wx:for="{{packs}}"
+          wx:key="packId"
+          class="pack {{selectedPack === item.packId ? 'pack--active' : ''}}"
+          hover-class="pack--hover"
+          data-id="{{item.packId}}"
+          bindtap="onPackTap"
+        >
+          <view class="pack__flag" wx:if="{{item.recommended}}">推荐</view>
+
+          <view class="pack__title">{{item.title}}</view>
+          <view class="pack__price">
+            <text class="pack__symbol">¥</text>{{item.priceText}}
+          </view>
+          <view class="pack__unit">{{item.unitText}}</view>
+          <view class="pack__desc">{{item.desc}}</view>
+        </view>
+      </view>
+
+      <view class="buy" hover-class="buy--active" bindtap="onBuy">
+        立即充值
+      </view>
+      <view class="buy__hint">微信支付 · 充值后立即到账</view>
+    </view>
+
+    <!-- ============ 流水 ============ -->
+    <view class="section">
+      <view class="section__title">额度流水</view>
+
+      <view class="logs" wx:if="{{logs.length}}">
+        <view wx:for="{{logs}}" wx:key="createdAt" class="log">
+          <view class="log__main">
+            <view class="log__source">{{item.sourceName}}</view>
+            <view class="log__remark">{{item.remark || '—'}}</view>
+          </view>
+          <view class="log__right">
+            <view class="log__change {{item.positive ? 'log__change--up' : 'log__change--down'}}">
+              {{item.changeText}}
+            </view>
+            <view class="log__time">{{item.timeText}}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="logs-empty" wx:else>还没有额度变动记录</view>
+    </view>
+
+  </view>
+</view>

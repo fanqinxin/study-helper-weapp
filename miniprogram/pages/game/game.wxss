@@ -1,0 +1,241 @@
+/* ============ 学习小游戏 —— 设计稿 08 ============ */
+
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg) var(--space-xl) 60rpx;
+  box-sizing: border-box;
+}
+
+/* ---------- 开始页 ---------- */
+.intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24rpx;
+}
+
+.intro__badge {
+  height: 52rpx;
+  padding: 0 26rpx;
+  border-radius: 26rpx;
+  background: var(--brand-light);
+  color: var(--brand-deep);
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.intro__title {
+  margin-top: var(--space-xl);
+  font-size: 60rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.intro__desc {
+  margin-top: var(--space-md);
+  font-size: var(--fs-title);
+  color: var(--text-secondary);
+}
+
+.intro__tip {
+  margin-top: 72rpx;
+  font-size: var(--fs-tiny);
+  color: var(--grass);
+  background: var(--grass-light);
+  padding: 12rpx 26rpx;
+  border-radius: 22rpx;
+}
+
+.start {
+  height: 108rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: 36rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.start--active {
+  opacity: 0.86;
+}
+
+/* ---------- 游戏中 ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0 var(--space-xl);
+}
+
+.topbar__progress {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+.topbar__combo {
+  height: 48rpx;
+  padding: 0 22rpx;
+  border-radius: 24rpx;
+  background: var(--coral-light);
+  color: var(--coral);
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.quiz {
+  padding: 56rpx 0 48rpx;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(150deg, #EDF6FC 0%, #DCEEF9 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.quiz__pinyin {
+  font-size: 104rpx;
+  font-weight: 700;
+  color: var(--sky);
+  line-height: 1.1;
+  letter-spacing: 2rpx;
+}
+
+.quiz__hint {
+  margin-top: var(--space-md);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.options {
+  margin-top: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.opt {
+  height: 152rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  border: 4rpx solid transparent;
+  color: var(--text-primary);
+  font-size: 64rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+  box-sizing: border-box;
+}
+
+.opt--hover {
+  opacity: 0.85;
+}
+
+.opt--right {
+  background: var(--grass-light);
+  border-color: var(--grass);
+  color: var(--grass);
+}
+
+.opt--wrong {
+  background: var(--coral-light);
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
+.feedback {
+  margin-top: var(--space-xl);
+  display: flex;
+  justify-content: center;
+}
+
+.feedback__text {
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.feedback__text--good { color: var(--grass); }
+.feedback__text--bad { color: var(--coral); }
+
+/* ---------- 结束页 ---------- */
+.over {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.over__star {
+  width: 120rpx;
+  height: 120rpx;
+}
+
+.over__score {
+  margin-top: var(--space-lg);
+  font-size: 128rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.over__label {
+  margin-top: 8rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+.over__stats {
+  display: flex;
+  gap: var(--space-2xl);
+  margin-top: 56rpx;
+}
+
+.over__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.over__stat-num {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+
+.over__stat-label {
+  margin-top: 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.over__tip {
+  margin-top: 56rpx;
+  font-size: var(--fs-title);
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.actions .btn {
+  flex: 1;
+}

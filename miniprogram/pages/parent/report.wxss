@@ -1,0 +1,247 @@
+/* ============ 家长报告详情 —— 设计稿 16 ============ */
+
+page {
+  background: #F3F4F6;
+}
+
+.page--parent .page__content {
+  padding-bottom: 60rpx;
+}
+
+/* ---------- 本周总评 ---------- */
+.sum {
+  margin-top: 8rpx;
+  padding: 36rpx 32rpx;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.06);
+}
+
+.sum__head {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.sum__star {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: #FFF7E6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sum__star-img {
+  width: 52rpx;
+  height: 52rpx;
+}
+
+.sum__head-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sum__title {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #1F2937;
+}
+
+.sum__sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #6B7280;
+}
+
+.sum__metrics {
+  margin-top: 32rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.smetric {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 20rpx;
+  background: #F9FAFB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.smetric__num {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #1F2937;
+  line-height: 1.1;
+}
+
+.smetric__num--dark {
+  color: #37352F;
+}
+
+.smetric__num--green {
+  color: #10B981;
+}
+
+.smetric__label {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+/* ---------- 通用卡 ---------- */
+.card {
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.05);
+}
+
+/* ---------- 各科错题分布 ---------- */
+.dist {
+  margin-top: 32rpx;
+  padding: 32rpx 30rpx;
+}
+
+.dist__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.dist__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.dist__total {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.dist__row {
+  margin-top: 28rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.dist__name {
+  width: 88rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.dist__track {
+  flex: 1;
+  height: 20rpx;
+  border-radius: 10rpx;
+  background: #F3F4F6;
+  overflow: hidden;
+}
+
+.dist__bar {
+  height: 100%;
+  border-radius: 10rpx;
+  transition: width 0.4s ease;
+}
+
+.dist__value {
+  width: 80rpx;
+  text-align: right;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #6B7280;
+  flex-shrink: 0;
+}
+
+.dist__note {
+  margin-top: 28rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #F3F4F6;
+  font-size: 22rpx;
+  color: #9CA3AF;
+  line-height: 1.6;
+}
+
+/* ---------- AI 教师点评 ---------- */
+.comment {
+  margin-top: 32rpx;
+  padding: 32rpx 30rpx;
+  border-radius: 24rpx;
+  background: #EDF9F1;
+}
+
+.comment__title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1F7A4D;
+}
+
+.comment__dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+.comment__body {
+  margin-top: 18rpx;
+  font-size: 26rpx;
+  color: #2F5D46;
+  line-height: 1.8;
+}
+
+/* ---------- 底部操作 ---------- */
+.actions {
+  margin-top: 48rpx;
+  display: flex;
+  gap: 20rpx;
+}
+
+.actions__primary {
+  flex: 1.4;
+  height: 100rpx;
+  border-radius: 999rpx;
+  background: #37352F;
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions__secondary {
+  flex: 1;
+  height: 100rpx;
+  border-radius: 999rpx;
+  background: #FFFFFF;
+  color: #37352F;
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions__btn--active {
+  opacity: 0.85;
+}
+
+/* ---------- 底部说明 ---------- */
+.footer-note {
+  margin-top: 32rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}

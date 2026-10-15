@@ -1,0 +1,44 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="AI 批改" showBack="{{false}}" />
+
+  <view class="wrap">
+
+    <!-- ============ 等待中 ============ -->
+    <block wx:if="{{!failed}}">
+      <view class="anim">
+        <view class="anim__ring anim__ring--1"></view>
+        <view class="anim__ring anim__ring--2"></view>
+        <view class="anim__core">AI</view>
+      </view>
+
+      <view class="step">{{stepText}}</view>
+
+      <view class="prog">
+        <view class="prog__fill" style="width: {{percent}}%;"></view>
+      </view>
+
+      <view class="elapsed">已等待 {{elapsed}} 秒，一般需要 10~30 秒</view>
+
+      <view class="notes">
+        <view class="notes__item">批改完成后会自动跳转，不用一直盯着</view>
+        <view class="notes__item">中途退出也不影响，结果会保存在批改记录里</view>
+      </view>
+    </block>
+
+    <!-- ============ 失败 ============ -->
+    <block wx:else>
+      <view class="fail">
+        <view class="fail__icon">!</view>
+        <view class="fail__title">这次没批改成功</view>
+        <view class="fail__msg">{{errorMsg}}</view>
+        <view class="fail__tip" wx:if="{{!errorMsg}}">额度已自动退还，不会重复扣费</view>
+      </view>
+
+      <view class="actions">
+        <view class="btn btn--secondary" hover-class="btn--active" bindtap="onLeave">稍后再说</view>
+        <view class="btn btn--primary" hover-class="btn--active" bindtap="onRetry">重新上传</view>
+      </view>
+    </block>
+
+  </view>
+</view>

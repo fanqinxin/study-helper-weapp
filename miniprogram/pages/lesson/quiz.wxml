@@ -1,0 +1,133 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="{{lesson.title || '课文练习'}}" />
+
+  <skeleton wx:if="{{loading}}" rows="{{3}}" />
+
+  <empty-state
+    wx:elif="{{!lesson || !total}}"
+    icon="lesson"
+    color="#6BB6E0"
+    text="这一课还没有练习题"
+    desc="换一课试试，或者稍后再来看看"
+    action="返回课文列表"
+    bind:action="onBackToList"
+  />
+
+  <view wx:elif="{{!submitted}}" class="page__content">
+
+    <!-- ============ 进度 ============ -->
+    <view class="bar">
+      <view class="bar__text">第 {{index + 1}} / {{total}} 题</view>
+      <view class="bar__track">
+        <view class="bar__fill" style="width: {{progressPercent}}%;"></view>
+      </view>
+    </view>
+
+    <!-- ============ 题干 ============ -->
+    <view class="q">
+      <view class="q__stem">{{question.stem}}</view>
+    </view>
+
+    <!-- 单选题 -->
+    <view class="options" wx:if="{{question.type === 1 && question.options}}">
+      <view
+        wx:for="{{question.options}}"
+        wx:key="index"
+        class="option {{answers[question.id] === item ? 'option--active' : ''}}"
+        hover-class="option--hover"
+        data-value="{{item}}"
+        bindtap="onOptionTap"
+      >
+        <view class="option__letter">{{letters[index]}}</view>
+        <view class="option__text">{{item}}</view>
+      </view>
+    </view>
+
+    <!-- 填空 / 计算题 -->
+    <view class="fill" wx:else>
+      <input
+        class="fill__input"
+        value="{{inputValue}}"
+        placeholder="在这里写下你的答案"
+        placeholder-class="fill__ph"
+        confirm-type="done"
+        bindinput="onInput"
+        bindconfirm="onConfirmInput"
+      />
+      <view class="fill__hint">写完点右下角「确认」继续</view>
+    </view>
+
+  </view>
+
+  <!-- ============ 结果页 ============ -->
+  <view wx:else class="page__content">
+
+    <view class="result {{result.score >= 80 ? 'result--good' : result.score >= 60 ? 'result--mid' : 'result--bad'}}">
+      <view class="result__score">{{result.score}}</view>
+      <view class="result__unit">分</view>
+      <view class="result__line">答对 {{result.correct}} / {{result.total}} 题</view>
+      <view class="result__tip">
+        {{result.score >= 80 ? '太棒了，这一课掌握得很好' : result.score >= 60 ? '基本掌握了，错的再看一遍' : '别灰心，把错的题目弄懂就是进步'}}
+      </view>
+    </view>
+
+    <view class="review">
+      <view class="review__title">逐题回顾</view>
+
+      <view
+        wx:for="{{result.detail}}"
+        wx:key="questionId"
+        class="item {{item.isCorrect ? 'item--right' : 'item--wrong'}}"
+      >
+        <view class="item__head">
+          <view class="item__seq">第 {{index + 1}} 题</view>
+          <view class="item__badge">{{item.isCorrect ? '答对' : '答错'}}</view>
+        </view>
+
+        <view class="item__stem">{{item.stem}}</view>
+
+        <view class="item__row">
+          <view class="item__label">你的答案</view>
+          <view class="item__value {{item.isCorrect ? '' : 'item__value--wrong'}}">
+            {{item.myAnswer || '未作答'}}
+          </view>
+        </view>
+
+        <view class="item__row" wx:if="{{!item.isCorrect}}">
+          <view class="item__label">正确答案</view>
+          <view class="item__value item__value--right">{{item.correctAnswer}}</view>
+        </view>
+
+        <view class="item__analysis" wx:if="{{item.analysis}}">{{item.analysis}}</view>
+      </view>
+    </view>
+
+    <view class="actions">
+      <view class="btn btn--secondary" hover-class="btn--active" bindtap="onRetry">再做一遍</view>
+      <view class="btn btn--primary" hover-class="btn--active" bindtap="onGoMistake">看看错题本</view>
+    </view>
+
+  </view>
+
+  <!-- ============ 底部操作（答题中） ============ -->
+  <view class="footer" wx:if="{{!loading && !submitted && total}}">
+    <view class="footer__prev" wx:if="{{index > 0}}" hover-class="footer__prev--active" bindtap="onPrev">
+      上一题
+    </view>
+
+    <view class="footer__spacer" wx:else></view>
+
+    <view
+      wx:if="{{question.type === 1}}"
+      class="footer__next {{canGoNext() ? '' : 'footer__next--disabled'}}"
+      hover-class="footer__next--active"
+      bindtap="onNext"
+    >
+      {{index + 1 >= total ? '提交批改' : '下一题'}}
+    </view>
+
+    <view wx:else class="footer__next" hover-class="footer__next--active" bindtap="onConfirmInput">
+      {{index + 1 >= total ? '提交批改' : '确认'}}
+    </view>
+  </view>
+</view>

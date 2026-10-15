@@ -1,0 +1,134 @@
+<view class="page page--parent theme-{{theme}}">
+  <nav-bar mode="title" title="家长中心" showBack="{{false}}" />
+
+  <view class="page__content">
+
+    <!-- ============ 头部：身份 + 孩子切换 ============ -->
+    <view class="head">
+      <view class="head__main">
+        <view class="head__title">{{child && child.nickname ? child.nickname + '的学习' : '孩子学习'}}</view>
+        <view class="head__sub">{{children.length > 1 ? '已绑定 ' + children.length + ' 个孩子 · 点头像切换' : (child && child.grade ? child.grade + '年级' : '已绑定孩子')}}</view>
+      </view>
+      <view class="head__avatar" hover-class="head__avatar--active" bindtap="onGoBind">
+        <image class="head__avatar-icon" src="{{iconBell}}" mode="aspectFit" />
+      </view>
+    </view>
+
+    <!-- 多孩切换行 -->
+    <scroll-view scroll-x class="child-scroll" wx:if="{{children.length > 1}}">
+      <view class="child-scroll__row">
+        <view
+          wx:for="{{children}}"
+          wx:key="uid"
+          class="child-chip {{item.uid === currentUid ? 'child-chip--on' : ''}}"
+          hover-class="child-chip--active"
+          data-uid="{{item.uid}}"
+          bindtap="onChildTap"
+        >
+          {{item.nickname ? item.nickname : '小朋友'}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- ============ 本周概览（深色主卡） ============ -->
+    <view class="overview" wx:if="{{child}}">
+      <view class="overview__top">
+        <view>
+          <view class="overview__title">本周学习概览</view>
+          <view class="overview__date">{{overview.planRate > 0 ? '计划完成 ' + overview.planRate + '%' : '本周才开始，继续加油'}}</view>
+        </view>
+        <view class="overview__badge">{{overview.weekRate >= 80 ? '很棒' : (overview.weekRate >= 60 ? '不错' : '加油')}}</view>
+      </view>
+      <view class="overview__metrics">
+        <view class="metric">
+          <view class="metric__num metric__num--yellow">{{overview.homeworkCount}}</view>
+          <view class="metric__label">批改份数</view>
+        </view>
+        <view class="metric">
+          <view class="metric__num metric__num--green">{{overview.weekRate}}%</view>
+          <view class="metric__label">平均正确率</view>
+        </view>
+        <view class="metric">
+          <view class="metric__num metric__num--blue">{{overview.mistakePending}}</view>
+          <view class="metric__label">待巩固错题</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 未绑定孩子 -->
+    <view class="empty-card" wx:if="{{!loading && !children.length}}">
+      <view class="empty-card__title">还没有绑定孩子</view>
+      <view class="empty-card__desc">让孩子在「我的 → 邀请家长查看」里出示邀请码</view>
+      <view class="empty-card__btn" hover-class="empty-card__btn--active" bindtap="onGoBind">去绑定孩子</view>
+    </view>
+
+    <block wx:if="{{child}}">
+
+      <!-- ============ 周趋势 ============ -->
+      <view class="section-title" wx:if="{{weekBars.length}}">本周坚持情况</view>
+      <view class="card week" wx:if="{{weekBars.length}}">
+        <view class="week__chart">
+          <view wx:for="{{weekBars}}" wx:key="label" class="week__col">
+            <view class="week__bar-wrap">
+              <view class="week__bar" style="height: {{item.height}}%;"></view>
+            </view>
+            <view class="week__label">{{item.label}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ============ 需要关注 ============ -->
+      <view class="section-title" wx:if="{{weakPoints.length}}">需要关注</view>
+      <view class="alerts" wx:if="{{weakPoints.length}}">
+        <view wx:for="{{weakPoints}}" wx:key="point" class="alert">
+          <view class="alert__icon alert__icon--coral">
+            <image class="alert__icon-img" src="{{iconWarning}}" mode="aspectFit" />
+          </view>
+          <view class="alert__main">
+            <view class="alert__title">「{{item.knowledgePoint}}」需要巩固</view>
+            <view class="alert__desc">{{item.count > 1 ? '近期出错 ' + item.count + ' 次，建议安排针对性练习' : '出错 1 次，留意下次作业表现'}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ============ 最近一次批改 ============ -->
+      <view class="section-title" wx:if="{{latest}}">最近一次批改</view>
+      <view class="card latest" wx:if="{{latest}}" hover-class="latest--active" bindtap="onGoReport">
+        <view class="latest__head">
+          <view class="tag tag--coral">{{latest.subjectName || '作业'}}</view>
+          <view class="latest__time">{{latest.timeText}}</view>
+        </view>
+        <view class="latest__score-row">
+          <view class="latest__score">{{latest.score !== null ? latest.score : '--'}}<text class="latest__score-unit">分</text></view>
+          <view class="latest__arrow">查看完整报告 ›</view>
+        </view>
+      </view>
+
+      <!-- ============ 快捷操作 ============ -->
+      <view class="section-title">快捷操作</view>
+      <view class="card ops">
+        <view class="op" hover-class="op--active" bindtap="onGoReport">
+          <view class="op__icon op__icon--sky">
+            <image class="op__icon-img" src="{{iconReport}}" mode="aspectFit" />
+          </view>
+          <view class="op__text">查看学习报告</view>
+          <view class="op__arrow">›</view>
+        </view>
+        <view class="op" hover-class="op--active" bindtap="onGoBind">
+          <view class="op__icon op__icon--grass">
+            <image class="op__icon-img" src="{{iconBind}}" mode="aspectFit" />
+          </view>
+          <view class="op__text">{{children.length > 1 ? '管理绑定的孩子' : '绑定另一个孩子'}}</view>
+          <view class="op__arrow">›</view>
+        </view>
+      </view>
+
+      <!-- ============ 切回孩子端 ============ -->
+      <view class="switch" hover-class="switch--active" bindtap="onSwitchToChild">
+        我是孩子，切换回学习端
+      </view>
+
+    </block>
+
+  </view>
+</view>

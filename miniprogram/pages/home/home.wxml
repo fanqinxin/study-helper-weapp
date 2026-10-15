@@ -1,0 +1,96 @@
+<!--
+  首页 —— 对应设计稿 01
+  结构：状态栏 → 问候区 → 今日任务卡 → 数据概览 → 学习工具 → Tab Bar
+-->
+<view class="page page--with-tabbar theme-{{theme}}">
+
+  <nav-bar mode="plain" />
+
+  <view class="page__content">
+
+    <!-- ============ 问候区 ============ -->
+    <view class="hero">
+      <view class="hero__left">
+        <view class="hero__greeting">{{greeting}}，{{user.nickname || '同学'}}</view>
+        <view class="hero__sub" wx:if="{{textbook}}">
+          {{textbook.grade}}年级 · {{textbook.name}} · 今天也要加油
+        </view>
+        <view class="hero__sub" wx:else>请先选择你的教材，开始同步练习</view>
+      </view>
+
+      <!-- 额度胶囊 -->
+      <quota-chip left="{{quotaLeft}}" low="{{quotaLow}}" bindtap="onQuotaTap" />
+    </view>
+
+    <!-- ============ 今日任务卡 ============ -->
+    <view class="task-card">
+      <view class="task-card__glow"></view>
+
+      <view class="task-card__head">
+        <view class="task-card__tag">
+          <image class="task-card__tag-icon" src="{{iconBolt}}" mode="aspectFit" />
+          <text>今日任务</text>
+        </view>
+        <view class="task-card__progress">{{taskDone}}/{{taskTotal}}</view>
+      </view>
+
+      <view class="task-card__title">{{todayTask.title || '上传今天的作业'}}</view>
+      <view class="task-card__desc">{{todayTask.desc || '拍张照片，AI 帮你检查一遍'}}</view>
+
+      <view class="progress task-card__bar">
+        <view class="progress__fill" style="width: {{taskPercent}}%;"></view>
+      </view>
+
+      <view class="task-card__btn" hover-class="task-card__btn--active" bindtap="onStartTask">
+        <image class="task-card__btn-icon" src="{{iconPlayDark}}" mode="aspectFit" />
+        <text>{{todayTask.actionText || '开始'}}</text>
+      </view>
+    </view>
+
+    <!-- ============ 数据概览 ============ -->
+    <view class="stats">
+      <view class="stats__item">
+        <view class="stats__num">{{stats.todayCount}}</view>
+        <view class="stats__label">今日练习</view>
+      </view>
+      <view class="stats__line"></view>
+      <view class="stats__item">
+        <view class="stats__num">{{stats.weekRate}}<text class="stats__unit">%</text></view>
+        <view class="stats__label">本周正确率</view>
+      </view>
+      <view class="stats__line"></view>
+      <view class="stats__item">
+        <view class="stats__num">{{stats.mistakeCount}}</view>
+        <view class="stats__label">待巩固错题</view>
+      </view>
+    </view>
+
+    <!-- ============ 学习工具 ============ -->
+    <view class="section">
+      <view class="section__head">
+        <view class="section__title">学习工具</view>
+      </view>
+
+      <view class="tools">
+        <view
+          wx:for="{{tools}}"
+          wx:key="key"
+          class="tool"
+          hover-class="tool--active"
+          data-url="{{item.url}}"
+          data-tab="{{item.tab}}"
+          bindtap="onToolTap"
+        >
+          <view class="tool__icon" style="background: {{item.bg}};">
+            <image class="tool__icon-img" src="{{item.icon}}" mode="aspectFit" />
+          </view>
+          <view class="tool__name">{{item.name}}</view>
+          <view class="tool__desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <tab-bar current="{{tabIndex}}" />
+</view>

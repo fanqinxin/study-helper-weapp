@@ -1,0 +1,202 @@
+/* ============ 家长绑定 —— 设计稿 12 ============
+   家长端整体走成人化配色：灰底 + 深灰主色，与儿童端绘本风刻意区分 */
+
+page {
+  background: #F3F4F6;
+}
+
+/* ---------- 说明 ---------- */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56rpx 32rpx 48rpx;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  margin-top: 8rpx;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.06);
+}
+
+.hero__icon {
+  width: 96rpx;
+  height: 96rpx;
+}
+
+.hero__title {
+  margin-top: 24rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.hero__desc {
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+/* ---------- 表单 ---------- */
+.form {
+  margin-top: 24rpx;
+  padding: 32rpx 30rpx;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.06);
+}
+
+.form__label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 16rpx;
+}
+
+.form__input {
+  height: 112rpx;
+  padding: 0 28rpx;
+  border-radius: 20rpx;
+  background: #F9FAFB;
+  border: 2rpx solid #E5E7EB;
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+  color: #1F2937;
+  box-sizing: border-box;
+}
+
+.form__ph {
+  color: #9CA3AF;
+  font-size: 30rpx;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.form__hint {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.form__btn {
+  margin-top: 32rpx;
+  height: 100rpx;
+  border-radius: 999rpx;
+  background: #37352F;
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form__btn--active {
+  opacity: 0.85;
+}
+
+.form__btn--disabled {
+  opacity: 0.4;
+}
+
+/* ---------- 已绑定孩子 ---------- */
+.children {
+  margin-top: 24rpx;
+  padding: 32rpx 30rpx;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.06);
+}
+
+.children__title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 20rpx;
+}
+
+.child {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F3F4F6;
+}
+
+.child__avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: #F3F4F6;
+  color: #6B7280;
+  font-size: 36rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.child__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.child__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.child__meta {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.child__badge {
+  height: 44rpx;
+  padding: 0 20rpx;
+  border-radius: 22rpx;
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 22rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.children__btn {
+  margin-top: 28rpx;
+  height: 100rpx;
+  border-radius: 999rpx;
+  background: #37352F;
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.children__btn--active {
+  opacity: 0.85;
+}
+
+/* ---------- 切换端 ---------- */
+.switch {
+  margin-top: 40rpx;
+  height: 96rpx;
+  border-radius: 999rpx;
+  color: #6B7280;
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch--active {
+  opacity: 0.7;
+}

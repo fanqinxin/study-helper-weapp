@@ -1,0 +1,233 @@
+/* ============ 额度不足 —— 设计稿 21 ============ */
+
+/* ---------- 说明 ---------- */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48rpx 32rpx 44rpx;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(160deg, #FFF1ED 0%, #FFE2DA 100%);
+  margin-top: var(--space-sm);
+}
+
+.hero__icon {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: var(--coral);
+  color: #FFFFFF;
+  font-size: 64rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero__title {
+  margin-top: var(--space-xl);
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hero__desc {
+  margin-top: var(--space-sm);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ---------- 区块 ---------- */
+.section {
+  margin-top: var(--space-2xl);
+}
+
+.section__title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+/* ---------- 免费出路 ---------- */
+.ways {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.way {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 24rpx 26rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.way--active {
+  opacity: 0.82;
+}
+
+.way__icon {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 22rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.way__icon--sky {
+  background: var(--sky-light);
+  color: var(--sky);
+}
+
+.way__icon--grass {
+  background: var(--grass-light);
+  color: var(--grass);
+}
+
+.way__icon--brand {
+  background: var(--brand-light);
+  color: var(--brand-deep);
+}
+
+.way__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.way__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.way__desc {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.way__arrow {
+  width: 14rpx;
+  height: 14rpx;
+  border-top: 3rpx solid var(--text-quaternary);
+  border-right: 3rpx solid var(--text-quaternary);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ---------- 加油包 ---------- */
+.packs {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.pack {
+  position: relative;
+  flex: 1;
+  padding: 32rpx 16rpx 26rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  border: 3rpx solid transparent;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.pack--rec {
+  border-color: var(--brand);
+  background: var(--brand-light);
+}
+
+.pack__flag {
+  position: absolute;
+  top: -18rpx;
+  height: 36rpx;
+  padding: 0 18rpx;
+  border-radius: 18rpx;
+  background: var(--coral);
+  color: #FFFFFF;
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.pack__quota {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pack__price {
+  margin-top: 14rpx;
+  font-size: 50rpx;
+  font-weight: 700;
+  color: var(--brand-deep);
+  line-height: 1;
+}
+
+.pack__symbol {
+  font-size: 24rpx;
+  margin-right: 2rpx;
+}
+
+.pack__desc {
+  margin-top: 12rpx;
+  font-size: 20rpx;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.buy {
+  margin-top: var(--space-xl);
+  height: 104rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: 34rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buy--active {
+  opacity: 0.86;
+}
+
+.buy__hint {
+  margin-top: var(--space-sm);
+  font-size: var(--fs-tiny);
+  color: var(--text-quaternary);
+  text-align: center;
+}
+
+/* ---------- 返回 ---------- */
+.back {
+  margin-top: var(--space-2xl);
+  height: 96rpx;
+  border-radius: var(--radius-pill);
+  color: var(--text-tertiary);
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back--active {
+  opacity: 0.7;
+}

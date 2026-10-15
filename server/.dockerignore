@@ -1,0 +1,47 @@
+# ============================================================
+# 构建上下文排除规则
+# 目标：镜像里只保留 src / sql / package*.json，其余一律不进
+# ============================================================
+
+# 依赖与本地环境（镜像内会重新安装）
+node_modules
+npm-debug.log*
+yarn-error.log*
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# 锁文件必须进镜像：有它才能走 npm ci 做可复现构建
+!package-lock.json
+
+# 用户上传的图片，属于运行时数据，不进镜像
+uploads
+!uploads/.gitkeep
+
+# 版本控制与本地工具
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+*.swp
+
+# 日志与临时文件
+logs
+*.log
+tmp
+.DS_Store
+
+# 编辑器/构建缓存
+.cache
+dist
+coverage
+
+# 容器与编排文件本身（避免上下文自嵌套）
+Dockerfile*
+docker-compose*.yml
+
+# 文档
+README.md
+docs

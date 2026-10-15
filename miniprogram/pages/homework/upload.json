@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index",
+    "quota-chip": "/components/quota-chip/index"
+  },
+  "navigationStyle": "custom",
+  "backgroundColor": "#FFFBF0"
+}

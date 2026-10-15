@@ -1,0 +1,183 @@
+# ============================================================
+# 小学生同步学习小程序 · 一键部署
+#
+# 启动：
+#   cp server/.env.example .env        # 首次，填写微信/微信支付/AI 密钥
+#   docker compose up -d --build
+#   docker compose logs -f api
+#
+# 迁移（首次或表结构变更时执行一次）：
+#   docker compose --profile tools run --rm migrate
+#
+# 停止 / 清空数据：
+#   docker compose down
+#   docker compose down -v              # 连数据卷一起删，慎用
+#
+# 说明：
+# - api 与 worker 共用同一个镜像，只是 command 不同
+# - worker 是队列消费者，扩容只需 --scale worker=N（Redis 队列天然竞争消费）
+# - 对外只暴露 api 端口；mysql/redis 不映射到宿主机，默认仅内网可见
+# ============================================================
+
+name: study-helper
+
+services:
+  # ---------------- 数据库 ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: sh-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --max_connections=300
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?请在 .env 中设置 DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-study_helper}
+      MYSQL_USER: ${DB_USER:-study}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?请在 .env 中设置 DB_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次初始化时执行：显式建库并授权给应用账号
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # 用应用账号探活，顺便验证授权是否生效
+      test:
+        [
+          'CMD-SHELL',
+          'mysqladmin ping -h 127.0.0.1 -u"$${MYSQL_USER}" -p"$${MYSQL_PASSWORD}" --silent',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - sh-net
+
+  # ---------------- 缓存 / 队列 ----------------
+  redis:
+    image: redis:7-alpine
+    container_name: sh-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --save
+      - '900 1'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - sh-net
+
+  # ---------------- API 服务 ----------------
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: study-helper-server:latest
+    container_name: sh-api
+    restart: unless-stopped
+    command: ['node', 'src/app.js']
+    env_file:
+      - ./.env
+    environment:
+      # 容器内一律走服务名，覆盖 .env 里的 127.0.0.1
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TZ: Asia/Shanghai
+    ports:
+      # 只监听回环，生产由外层 Nginx 反代并终止 TLS；
+      # 需要局域网直连可改成 "3000:3000"
+      - '127.0.0.1:3000:3000'
+    volumes:
+      # 上传的作业图片持久化，重建容器不丢
+      - uploads-data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sh-net
+
+  # ---------------- 批改队列消费者 ----------------
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: study-helper-server:latest
+    container_name: sh-worker
+    restart: unless-stopped
+    command: ['node', 'src/jobs/homeworkWorker.js']
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TZ: Asia/Shanghai
+    volumes:
+      # 与 api 共享图片目录：worker 要读 api 落盘的作业图片
+      - uploads-data:/app/uploads
+    # worker 无 HTTP 端口，关掉镜像内置的探活
+    healthcheck:
+      disable: true
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks:
+      - sh-net
+
+  # ---------------- 迁移任务（一次性，默认不随 up 启动）----------------
+  migrate:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: study-helper-server:latest
+    container_name: sh-migrate
+    command: ['node', 'src/models/migrate.js']
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sh-net
+    restart: 'no'
+    profiles:
+      - tools
+
+volumes:
+  mysql-data:
+  redis-data:
+  uploads-data:
+
+networks:
+  sh-net:
+    driver: bridge

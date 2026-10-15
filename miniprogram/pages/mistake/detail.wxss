@@ -1,0 +1,202 @@
+/* ============ 错题重做 ============ */
+
+.card {
+  padding: 30rpx 28rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card__subject {
+  height: 40rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  background: var(--brand-light);
+  color: var(--brand-deep);
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.card__count {
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: var(--coral);
+}
+
+.card__stem {
+  margin-top: 20rpx;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.card__wrong {
+  margin-top: var(--space-lg);
+  padding: 20rpx 22rpx;
+  border-radius: var(--radius-md);
+  background: var(--coral-light);
+}
+
+.card__label {
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.card__wrong-value {
+  margin-top: 6rpx;
+  font-size: 30rpx;
+  color: var(--coral);
+}
+
+/* ---------- 作答 ---------- */
+.answer {
+  margin-top: var(--space-2xl);
+}
+
+.answer__title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.answer__input {
+  height: 112rpx;
+  padding: 0 28rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 2rpx solid var(--border);
+  font-size: 32rpx;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.answer__ph {
+  color: var(--text-quaternary);
+  font-size: 30rpx;
+}
+
+.answer__btn {
+  margin-top: var(--space-xl);
+  height: 104rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: 34rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.answer__btn--active {
+  opacity: 0.86;
+}
+
+/* ---------- 结果 ---------- */
+.result {
+  margin-top: var(--space-xl);
+  padding: 36rpx 30rpx;
+  border-radius: var(--radius-2xl);
+  background: var(--coral-light);
+}
+
+.result--right {
+  background: var(--grass-light);
+}
+
+.result__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 48rpx;
+  padding: 0 22rpx;
+  border-radius: 24rpx;
+  background: var(--coral);
+  color: #FFFFFF;
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+.result--right .result__badge {
+  background: var(--grass);
+}
+
+.result__msg {
+  margin-top: var(--space-md);
+  font-size: 30rpx;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.result__row {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding: 20rpx 22rpx;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.result__label {
+  flex-shrink: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+.result__value {
+  flex: 1;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ---------- 讲解 ---------- */
+.analysis {
+  margin-top: var(--space-lg);
+  padding: 28rpx 26rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.analysis__title {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--grass);
+}
+
+.analysis__icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.analysis__text {
+  margin-top: 14rpx;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ---------- 操作 ---------- */
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-2xl);
+}
+
+.actions .btn {
+  flex: 1;
+}

@@ -1,0 +1,99 @@
+<view class="page page--with-tabbar theme-{{theme}}">
+  <nav-bar mode="plain" />
+
+  <view class="page__content">
+
+    <!-- ============ 页头 + 清空进度 ============ -->
+    <view class="head">
+      <view class="head__title">错题本</view>
+      <view class="head__sub">答对的题目会自动毕业，看着它越来越空就是进步</view>
+    </view>
+
+    <view class="progress-card">
+      <view class="progress-card__row">
+        <view class="progress-card__left">
+          <view class="progress-card__num">{{stats.pending}}</view>
+          <view class="progress-card__label">道待巩固</view>
+        </view>
+        <view class="progress-card__right">
+          <view class="progress-card__done">已攻克 {{stats.mastered}} 道</view>
+          <view class="progress-card__total">共 {{stats.total}} 道</view>
+        </view>
+      </view>
+
+      <view class="progress-card__track">
+        <view class="progress-card__fill" style="width: {{clearPercent}}%;"></view>
+      </view>
+      <view class="progress-card__hint">清空进度 {{clearPercent}}%</view>
+    </view>
+
+    <!-- ============ 高频知识点 ============ -->
+    <view class="points" wx:if="{{stats.topPoints.length}}">
+      <view class="points__title">最该补的知识点</view>
+      <view class="points__list">
+        <view wx:for="{{stats.topPoints}}" wx:key="knowledgePoint" class="point">
+          {{item.knowledgePoint}}
+          <text class="point__count">{{item.count}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ============ 筛选 ============ -->
+    <view class="filters">
+      <view
+        wx:for="{{subjects}}"
+        wx:key="value"
+        class="filter {{subject === item.value ? 'filter--active' : ''}}"
+        hover-class="filter--hover"
+        data-value="{{item.value}}"
+        bindtap="onSubjectTap"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
+    <!-- ============ 列表 ============ -->
+    <skeleton wx:if="{{loading}}" rows="{{3}}" />
+
+    <empty-state
+      wx:elif="{{!list.length}}"
+      icon="check"
+      color="#7DD3A0"
+      text="{{subject ? '这个学科没有待巩固的错题' : '错题本是空的'}}"
+      desc="上传作业或做课文练习，错题会自动收进来"
+      action="去做课文练习"
+      bind:action="onGoLesson"
+    />
+
+    <view wx:else class="list">
+      <view
+        wx:for="{{list}}"
+        wx:key="id"
+        class="mistake"
+        hover-class="mistake--active"
+        data-id="{{item.id}}"
+        bindtap="onItemTap"
+      >
+        <view class="mistake__head">
+          <view class="mistake__subject">{{item.subjectName}}</view>
+          <view class="mistake__count" wx:if="{{item.wrongCount > 1}}">错过 {{item.wrongCount}} 次</view>
+        </view>
+
+        <view class="mistake__stem">{{item.stem}}</view>
+
+        <view class="mistake__row">
+          <view class="mistake__label">你的答案</view>
+          <view class="mistake__wrong">{{item.studentAns || '未作答'}}</view>
+        </view>
+
+        <view class="mistake__foot">
+          <view class="mistake__kp" wx:if="{{item.knowledgePoint}}">{{item.knowledgePoint}}</view>
+          <view class="mistake__go">重做一遍</view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <tab-bar current="{{tabIndex}}" />
+</view>

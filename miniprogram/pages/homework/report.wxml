@@ -1,0 +1,119 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="批改报告" />
+
+  <skeleton wx:if="{{loading}}" hero="{{true}}" rows="{{2}}" />
+
+  <empty-state
+    wx:elif="{{!report}}"
+    icon="lesson"
+    color="#FF8C7A"
+    text="没有找到这份报告"
+    desc="可能已被删除，回批改记录看看"
+    action="重新上传"
+    bind:action="onUploadMore"
+  />
+
+  <view wx:else class="page__content">
+
+    <!-- ============ 结论 ============ -->
+    <view class="summary">
+      <score-ring
+        score="{{report.score}}"
+        size="{{240}}"
+        color="{{ringColor}}"
+        sub="得分"
+      />
+
+      <view class="summary__right">
+        <view class="summary__subject">
+          <image class="summary__spark" src="{{iconSpark}}" mode="aspectFit" />
+          <text>{{subjectName}}作业</text>
+        </view>
+        <view class="summary__line">
+          答对 <text class="summary__strong summary__strong--good">{{report.correct}}</text> 题
+        </view>
+        <view class="summary__line">
+          答错 <text class="summary__strong summary__strong--bad">{{wrongItems.length}}</text> 题
+        </view>
+        <view class="summary__tip" wx:if="{{wrongItems.length === 0}}">
+          全对，这次表现特别棒
+        </view>
+        <view class="summary__tip" wx:elif="{{wrongItems.length <= 2}}">
+          只差一点点，把错题弄懂就完美了
+        </view>
+        <view class="summary__tip" wx:else>
+          错题已自动收进错题本，抽空巩固一下
+        </view>
+      </view>
+    </view>
+
+    <!-- ============ 错题 ============ -->
+    <view class="block" wx:if="{{wrongItems.length}}">
+      <view class="block__head">
+        <view class="block__title">需要订正 · {{wrongItems.length}} 题</view>
+      </view>
+
+      <view wx:for="{{wrongItems}}" wx:key="seq" class="item item--wrong">
+        <view class="item__head">
+          <view class="item__no">第 {{item.seq}} 题</view>
+          <view class="item__tag">答错</view>
+        </view>
+
+        <view class="item__stem" wx:if="{{item.stem}}">{{item.stem}}</view>
+
+        <view class="item__row">
+          <view class="item__label">你的答案</view>
+          <view class="item__value item__value--wrong">{{item.studentAns || '未作答'}}</view>
+        </view>
+
+        <view class="item__row" wx:if="{{item.correctAns}}">
+          <view class="item__label">正确答案</view>
+          <view class="item__value item__value--right">{{item.correctAns}}</view>
+        </view>
+
+        <view class="item__analysis" wx:if="{{item.analysis}}">{{item.analysis}}</view>
+      </view>
+    </view>
+
+    <!-- ============ 全对 ============ -->
+    <view class="block block--empty" wx:else>
+      <view class="perfect">
+        <view class="perfect__title">这份作业全部答对</view>
+        <view class="perfect__desc">保持这个状态，明天再来一份</view>
+      </view>
+    </view>
+
+    <!-- ============ 答对题目（折叠） ============ -->
+    <view class="block" wx:if="{{rightItems.length}}">
+      <view class="block__head block__head--tap" bindtap="onToggleRight">
+        <view class="block__title">答对题目 · {{rightItems.length}} 题</view>
+        <view class="block__toggle">{{showRight ? '收起' : '展开'}}</view>
+      </view>
+
+      <block wx:if="{{showRight}}">
+        <view wx:for="{{rightItems}}" wx:key="seq" class="item item--right">
+          <view class="item__head">
+            <view class="item__no">第 {{item.seq}} 题</view>
+            <view class="item__tag item__tag--right">答对</view>
+          </view>
+          <view class="item__stem" wx:if="{{item.stem}}">{{item.stem}}</view>
+          <view class="item__row">
+            <view class="item__label">你的答案</view>
+            <view class="item__value">{{item.studentAns || '—'}}</view>
+          </view>
+        </view>
+      </block>
+    </view>
+
+  </view>
+
+  <!-- ============ 底部行动 ============ -->
+  <view class="footer" wx:if="{{report}}">
+    <view class="footer__ghost" hover-class="footer__ghost--active" bindtap="onUploadMore">
+      再传一份
+    </view>
+    <view class="footer__main" hover-class="footer__main--active" bindtap="onGoMistake">
+      去巩固错题
+    </view>
+  </view>
+</view>

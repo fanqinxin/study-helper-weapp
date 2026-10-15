@@ -1,0 +1,118 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="添加我的教材">
+    <quota-chip slot="right" left="{{quotaLeft}}" low="{{quotaLow}}" />
+  </nav-bar>
+
+  <view class="page__content">
+
+    <view class="head">
+      <view class="head__title">拍下课本的目录页</view>
+      <view class="head__sub">AI 会自动识别出单元和课文，整理成你的专属练习册</view>
+    </view>
+
+    <!-- ============ 基本信息 ============ -->
+    <view class="field">
+      <view class="field__label">学科</view>
+      <view class="chips">
+        <view
+          wx:for="{{subjectList}}"
+          wx:key="value"
+          class="chip {{subject === item.value ? 'chip--active' : ''}}"
+          hover-class="chip--hover"
+          data-value="{{item.value}}"
+          bindtap="onSubjectTap"
+        >
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field__label">年级</view>
+      <view class="chips chips--wrap">
+        <view
+          wx:for="{{gradeList}}"
+          wx:key="*this"
+          class="chip {{grade === item ? 'chip--active' : ''}}"
+          hover-class="chip--hover"
+          data-value="{{item}}"
+          bindtap="onGradeTap"
+        >
+          {{item}}年级
+        </view>
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field__label">册别</view>
+      <view class="chips">
+        <view
+          wx:for="{{volumeList}}"
+          wx:key="value"
+          class="chip {{volume === item.value ? 'chip--active' : ''}}"
+          hover-class="chip--hover"
+          data-value="{{item.value}}"
+          bindtap="onVolumeTap"
+        >
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <!-- ============ 目录照片 ============ -->
+    <view class="field">
+      <view class="field__label">
+        目录页照片
+        <text class="field__count">{{images.length}}/3</text>
+      </view>
+
+      <view class="shots">
+        <view wx:for="{{images}}" wx:key="path" class="shot">
+          <image class="shot__img" src="{{item.path}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreview" />
+          <view class="shot__del" catchtap="onRemove" data-index="{{index}}">×</view>
+        </view>
+
+        <view
+          wx:if="{{images.length < 3}}"
+          class="shot shot--add"
+          hover-class="shot--add-hover"
+          bindtap="onChoose"
+        >
+          <image class="shot__add-icon" src="{{iconCamera}}" mode="aspectFit" />
+          <view class="shot__add-text">{{images.length ? '再加一张' : '拍目录页'}}</view>
+        </view>
+      </view>
+
+      <view class="tips">
+        <view class="tips__item">· 目录一般在课本最前面，拍全一页效果最好</view>
+        <view class="tips__item">· 目录太长可以分几页拍，AI 会合并整理</view>
+        <view class="tips__item" wx:if="{{images.length}}">· 已压缩至 {{totalSize}}</view>
+      </view>
+    </view>
+
+    <!-- ============ 消耗提示 ============ -->
+    <view class="cost">
+      <view class="cost__left">
+        <view class="cost__title">本次识别消耗 1 次额度</view>
+        <view class="cost__desc">识别失败会自动退还，不会白扣</view>
+      </view>
+      <view class="cost__quota">
+        <view class="cost__num {{quotaLow ? 'cost__num--low' : ''}}">
+          {{quotaLeft < 0 ? '不限' : quotaLeft}}
+        </view>
+        <view class="cost__unit">剩余</view>
+      </view>
+    </view>
+
+  </view>
+
+  <view class="footer">
+    <view
+      class="submit {{images.length && !submitting ? '' : 'submit--disabled'}}"
+      hover-class="submit--active"
+      bindtap="onSubmit"
+    >
+      {{submitting ? '识别中…' : '开始识别'}}
+    </view>
+  </view>
+</view>

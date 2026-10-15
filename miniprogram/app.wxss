@@ -1,0 +1,207 @@
+/* 全局样式 —— 引入设计变量 */
+@import "styles/variables.wxss";
+
+page {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  /* 深色模式跟随 */
+  transition: background 0.2s ease;
+}
+
+/* ============ 通用布局工具类 ============ */
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 页面主内容区：统一左右内边距 */
+.page__content {
+  flex: 1;
+  padding: var(--space-md) var(--space-xl) var(--space-md);
+  box-sizing: border-box;
+}
+
+/* 为固定 Tab Bar 预留空间 */
+.page--with-tabbar {
+  padding-bottom: 220rpx;
+}
+
+/* ============ 卡片 ============ */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  box-sizing: border-box;
+}
+
+.card--flat {
+  box-shadow: none;
+  border: 1rpx solid var(--border-light);
+}
+
+/* ============ 文字层级 ============ */
+.t-h1 {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.t-h2 {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.t-h3 {
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.t-title {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.t-body {
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.t-caption {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.t-tiny {
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+/* ============ 按钮 ============ */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 104rpx;
+  border-radius: var(--radius-pill);
+  font-size: 32rpx;
+  font-weight: 700;
+  border: none;
+  box-sizing: border-box;
+}
+
+.btn--primary {
+  background: var(--brand);
+  color: var(--text-on-brand);
+}
+
+.btn--secondary {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 2rpx solid var(--border);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn::after {
+  border: none;
+}
+
+.btn--active {
+  opacity: 0.85;
+}
+
+/* ============ 进度条 ============ */
+.progress {
+  height: 20rpx;
+  border-radius: 10rpx;
+  background: var(--progress-track);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: 10rpx;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+/* ============ 标签 ============ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 16rpx;
+  border-radius: 20rpx;
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  background: var(--brand-light);
+  color: var(--brand-deep);
+}
+
+.tag--coral {
+  background: var(--coral-light);
+  color: var(--coral);
+}
+
+.tag--sky {
+  background: var(--sky-light);
+  color: var(--sky);
+}
+
+.tag--grass {
+  background: var(--grass-light);
+  color: var(--grass);
+}
+
+/* ============ 空状态 ============ */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  gap: var(--space-md);
+}
+
+.empty__text {
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+/* ============ 分隔线 ============ */
+.divider {
+  height: 1rpx;
+  background: var(--divider);
+  margin: var(--space-md) 0;
+}
+
+/* ============ 通用行 ============ */
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.row--between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-1 {
+  flex: 1;
+}

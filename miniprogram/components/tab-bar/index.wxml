@@ -1,0 +1,19 @@
+<view class="tabbar">
+  <view class="tabbar__pill">
+    <view
+      wx:for="{{list}}"
+      wx:key="path"
+      class="tabbar__item {{current === index ? 'tabbar__item--active' : ''}}"
+      data-index="{{index}}"
+      data-path="{{item.path}}"
+      bindtap="onTap"
+    >
+      <image
+        class="tabbar__icon"
+        src="{{current === index ? item.iconActive : item.iconNormal}}"
+        mode="aspectFit"
+      />
+      <view class="tabbar__label">{{item.text}}</view>
+    </view>
+  </view>
+</view>

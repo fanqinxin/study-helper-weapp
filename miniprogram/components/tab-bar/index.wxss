@@ -1,0 +1,56 @@
+/* Tab Bar —— 胶囊式，与设计稿一致 */
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12rpx 42rpx calc(42rpx + env(safe-area-inset-bottom));
+  background: var(--bg-canvas);
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+/* 白色胶囊容器 */
+.tabbar__pill {
+  display: flex;
+  align-items: center;
+  height: 124rpx;
+  border-radius: 72rpx;
+  background: var(--bg-card);
+  border: 1rpx solid var(--border-light);
+  padding: 8rpx;
+  box-sizing: border-box;
+}
+
+.tabbar__item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  border-radius: 52rpx;
+  transition: background 0.2s ease;
+}
+
+/* 选中态：黄色填充 */
+.tabbar__item--active {
+  background: var(--brand);
+}
+
+.tabbar__icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.tabbar__label {
+  font-size: 20rpx;
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+
+.tabbar__item--active .tabbar__label {
+  color: var(--text-on-brand);
+  font-weight: 600;
+}

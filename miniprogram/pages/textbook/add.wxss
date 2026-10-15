@@ -1,0 +1,245 @@
+/* ============ 添加自定义教材 —— 设计稿 11 ============ */
+
+.page {
+  padding-bottom: 220rpx;
+}
+
+.head {
+  padding: var(--space-sm) 0 var(--space-xl);
+}
+
+.head__title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.head__sub {
+  margin-top: 8rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.field {
+  margin-bottom: var(--space-xl);
+}
+
+.field__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.field__count {
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+/* ---------- 选择 chips ---------- */
+.chips {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.chips--wrap {
+  flex-wrap: wrap;
+}
+
+.chip {
+  height: 76rpx;
+  padding: 0 34rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 3rpx solid transparent;
+  color: var(--text-secondary);
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+  box-sizing: border-box;
+}
+
+.chips:not(.chips--wrap) .chip {
+  flex: 1;
+}
+
+.chip--hover {
+  opacity: 0.85;
+}
+
+.chip--active {
+  background: var(--brand);
+  border-color: var(--brand-deep);
+  color: var(--text-on-brand);
+  font-weight: 700;
+}
+
+/* ---------- 图片 ---------- */
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.shot {
+  position: relative;
+  width: calc((100% - var(--space-md) * 2) / 3);
+  height: 200rpx;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.shot__img {
+  width: 100%;
+  height: 100%;
+}
+
+.shot__del {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: rgba(55, 53, 47, 0.72);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shot--add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  border: 3rpx dashed var(--border);
+  background: var(--bg-subtle);
+  box-sizing: border-box;
+}
+
+.shot--add-hover {
+  opacity: 0.8;
+}
+
+.shot__add-icon {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.shot__add-text {
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+/* ---------- 提示 ---------- */
+.tips {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.tips__item {
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+  line-height: 1.6;
+}
+
+/* ---------- 消耗 ---------- */
+.cost {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 28rpx 30rpx;
+  border-radius: var(--radius-xl);
+  background: var(--brand-light);
+}
+
+.cost__left {
+  flex: 1;
+  min-width: 0;
+}
+
+.cost__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+
+.cost__desc {
+  margin-top: 6rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-secondary);
+}
+
+.cost__quota {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cost__num {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: var(--brand-deep);
+  line-height: 1;
+}
+
+.cost__num--low {
+  color: var(--coral);
+}
+
+.cost__unit {
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: var(--text-tertiary);
+}
+
+/* ---------- 底部 ---------- */
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx var(--space-xl) calc(20rpx + env(safe-area-inset-bottom));
+  background: var(--bg-canvas);
+  border-top: 1rpx solid var(--border-light);
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+.submit {
+  height: 104rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: 34rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit--active {
+  opacity: 0.86;
+}
+
+.submit--disabled {
+  opacity: 0.45;
+}

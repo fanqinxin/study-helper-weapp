@@ -1,0 +1,10 @@
+<view class="empty">
+  <view class="empty__icon">
+    <image class="empty__icon-img" src="{{iconUrl}}" mode="aspectFit" />
+  </view>
+  <view class="empty__text">{{text}}</view>
+  <view class="empty__desc" wx:if="{{desc}}">{{desc}}</view>
+  <view class="empty__btn" wx:if="{{action}}" hover-class="empty__btn--active" bindtap="onAction">
+    {{action}}
+  </view>
+</view>

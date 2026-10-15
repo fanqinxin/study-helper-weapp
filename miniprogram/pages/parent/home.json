@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "navigationStyle": "custom",
+  "backgroundColor": "#F3F4F6",
+  "enablePullDownRefresh": true
+}

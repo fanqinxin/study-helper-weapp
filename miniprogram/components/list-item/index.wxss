@@ -1,0 +1,79 @@
+.li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 26rpx 0;
+  position: relative;
+}
+
+.li--divider::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--divider);
+}
+
+.li--active {
+  opacity: 0.7;
+}
+
+.li__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.li__icon-img {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.li__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.li__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.li__title--danger {
+  color: var(--coral);
+}
+
+.li__desc {
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.li__value {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* 右箭头：CSS 绘制 */
+.li__arrow {
+  width: 14rpx;
+  height: 14rpx;
+  border-top: 3rpx solid var(--text-quaternary);
+  border-right: 3rpx solid var(--text-quaternary);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  margin-left: 4rpx;
+}

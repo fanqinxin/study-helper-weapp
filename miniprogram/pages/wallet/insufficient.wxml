@@ -1,0 +1,75 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="额度不足" />
+
+  <view class="page__content">
+
+    <!-- ============ 说明 ============ -->
+    <view class="hero">
+      <view class="hero__icon">!</view>
+      <view class="hero__title">{{reason}}</view>
+      <view class="hero__desc" wx:if="{{freeUsedUp && resetText}}">
+        免费额度将在 {{resetText}} 重新发放，每周赠送 {{balance.freeTotal}} 次
+      </view>
+      <view class="hero__desc" wx:else>
+        可以等下个周期，也可以先充一点继续用
+      </view>
+    </view>
+
+    <!-- ============ 现在就想继续？============ -->
+    <view class="section">
+      <view class="section__title">不花钱也能继续学</view>
+
+      <view class="ways">
+        <view class="way" hover-class="way--active" bindtap="onGoLesson">
+          <view class="way__icon way__icon--sky">A</view>
+          <view class="way__main">
+            <view class="way__title">做课文同步练习</view>
+            <view class="way__desc">本地判分，不消耗额度</view>
+          </view>
+          <view class="way__arrow"></view>
+        </view>
+
+        <view class="way" hover-class="way--active" bindtap="onManualCheck">
+          <view class="way__icon way__icon--grass">✓</view>
+          <view class="way__main">
+            <view class="way__title">自己对着答案检查</view>
+            <view class="way__desc">错题本里有标准答案和讲解</view>
+          </view>
+          <view class="way__arrow"></view>
+        </view>
+
+        <view class="way" hover-class="way--active" bindtap="onPlayGame">
+          <view class="way__icon way__icon--brand">★</view>
+          <view class="way__main">
+            <view class="way__title">玩一局识字小游戏</view>
+            <view class="way__desc">歇一歇，换换脑子</view>
+          </view>
+          <view class="way__arrow"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ============ 加油包 ============ -->
+    <view class="section">
+      <view class="section__title">想继续让 AI 批改</view>
+
+      <view class="packs" wx:if="{{packs.length}}">
+        <view wx:for="{{packs}}" wx:key="packId" class="pack {{item.recommended ? 'pack--rec' : ''}}">
+          <view class="pack__flag" wx:if="{{item.recommended}}">最划算</view>
+          <view class="pack__quota">{{item.quotaText}}</view>
+          <view class="pack__price"><text class="pack__symbol">¥</text>{{item.priceText}}</view>
+          <view class="pack__desc">{{item.desc}}</view>
+        </view>
+      </view>
+
+      <view class="buy" hover-class="buy--active" bindtap="onBuy">
+        去充值
+      </view>
+      <view class="buy__hint">充值后立即到账，批改失败自动退还</view>
+    </view>
+
+    <!-- ============ 返回 ============ -->
+    <view class="back" hover-class="back--active" bindtap="onBack">先返回，稍后再说</view>
+
+  </view>
+</view>

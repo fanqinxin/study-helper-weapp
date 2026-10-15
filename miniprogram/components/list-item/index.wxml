@@ -1,0 +1,13 @@
+<view class="li {{divider ? 'li--divider' : ''}}" hover-class="li--active" bindtap="onTap">
+  <view class="li__icon" wx:if="{{iconUrl}}" style="background: {{iconBg}};">
+    <image class="li__icon-img" src="{{iconUrl}}" mode="aspectFit" />
+  </view>
+
+  <view class="li__main">
+    <view class="li__title {{danger ? 'li__title--danger' : ''}}">{{title}}</view>
+    <view class="li__desc" wx:if="{{desc}}">{{desc}}</view>
+  </view>
+
+  <view class="li__value" wx:if="{{value}}">{{value}}</view>
+  <view class="li__arrow" wx:if="{{arrow}}"></view>
+</view>

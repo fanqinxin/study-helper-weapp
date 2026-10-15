@@ -1,0 +1,49 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/lesson/list",
+    "pages/lesson/quiz",
+    "pages/plan/plan",
+    "pages/game/game",
+    "pages/mistake/list",
+    "pages/mistake/detail",
+    "pages/mine/mine",
+    "pages/homework/upload",
+    "pages/homework/processing",
+    "pages/homework/report",
+    "pages/textbook/center",
+    "pages/textbook/add",
+    "pages/parent/bind",
+    "pages/parent/home",
+    "pages/parent/report",
+    "pages/wallet/center",
+    "pages/wallet/insufficient"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#FFFBF0",
+    "backgroundTextStyle": "dark",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#A09884",
+    "selectedColor": "#37352F",
+    "backgroundColor": "#FFFBF0",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/home", "text": "首页" },
+      { "pagePath": "pages/lesson/list", "text": "课文" },
+      { "pagePath": "pages/plan/plan", "text": "计划" },
+      { "pagePath": "pages/mistake/list", "text": "错题" },
+      { "pagePath": "pages/mine/mine", "text": "我的" }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于匹配所在地区的教材版本"
+    }
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

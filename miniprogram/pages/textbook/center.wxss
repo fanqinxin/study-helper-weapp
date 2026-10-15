@@ -1,0 +1,223 @@
+/* ============ 教材中心 —— 设计稿 10 ============ */
+
+.head {
+  padding: var(--space-sm) 0 var(--space-lg);
+}
+
+.head__title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.head__sub {
+  margin-top: 8rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ---------- 学科筛选 ---------- */
+.filters {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.filter {
+  flex: 1;
+  height: 84rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 3rpx solid transparent;
+  color: var(--text-secondary);
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+  box-sizing: border-box;
+}
+
+.filter--hover {
+  opacity: 0.85;
+}
+
+.filter--active {
+  background: var(--brand);
+  border-color: var(--brand-deep);
+  color: var(--text-on-brand);
+  font-weight: 700;
+}
+
+/* ---------- 年级 ---------- */
+.grades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.grade {
+  height: 64rpx;
+  padding: 0 26rpx;
+  border-radius: 32rpx;
+  background: var(--bg-card);
+  border: 2rpx solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.grade--hover {
+  opacity: 0.8;
+}
+
+.grade--active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-canvas);
+}
+
+/* ---------- 版本列表 ---------- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.book {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 24rpx 26rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  border: 3rpx solid transparent;
+  box-shadow: var(--shadow-card);
+  box-sizing: border-box;
+}
+
+.book--hover {
+  opacity: 0.85;
+}
+
+.book--active {
+  border-color: var(--brand);
+  background: var(--brand-light);
+}
+
+/* 书脊式封面块 */
+.book__cover {
+  width: 84rpx;
+  height: 108rpx;
+  border-radius: 12rpx 20rpx 20rpx 12rpx;
+  background: linear-gradient(160deg, #FFD87A, #F5B93C);
+  color: #FFFFFF;
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.book__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.book__name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.book__meta {
+  margin-top: 8rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.book__custom {
+  margin-left: 10rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 12rpx;
+  background: var(--coral-light);
+  color: var(--coral);
+}
+
+.book__check {
+  flex-shrink: 0;
+  height: 48rpx;
+  padding: 0 20rpx;
+  border-radius: 24rpx;
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.book__arrow {
+  width: 14rpx;
+  height: 14rpx;
+  border-top: 3rpx solid var(--text-quaternary);
+  border-right: 3rpx solid var(--text-quaternary);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ---------- 添加入口 ---------- */
+.add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-2xl);
+  padding: 28rpx 26rpx;
+  border-radius: var(--radius-xl);
+  border: 3rpx dashed var(--border);
+  background: var(--bg-subtle);
+  box-sizing: border-box;
+}
+
+.add--active {
+  opacity: 0.8;
+}
+
+.add__plus {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  background: var(--brand-light);
+  color: var(--brand-deep);
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.add__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.add__desc {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}

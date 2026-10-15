@@ -1,0 +1,252 @@
+/* ============ 错题本 —— 设计稿 07 ============ */
+
+.head {
+  padding: var(--space-sm) 0 var(--space-lg);
+}
+
+.head__title {
+  font-size: 46rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.head__sub {
+  margin-top: 8rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ---------- 清空进度 ---------- */
+.progress-card {
+  padding: 32rpx 30rpx 28rpx;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(150deg, #EDF6FC 0%, #DCEEF9 100%);
+}
+
+.progress-card__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.progress-card__left {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+
+.progress-card__num {
+  font-size: 72rpx;
+  font-weight: 700;
+  color: var(--sky);
+  line-height: 1;
+}
+
+.progress-card__label {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.progress-card__right {
+  text-align: right;
+}
+
+.progress-card__done {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.progress-card__total {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.progress-card__track {
+  margin-top: 24rpx;
+  height: 18rpx;
+  border-radius: 9rpx;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+
+.progress-card__fill {
+  height: 100%;
+  border-radius: 9rpx;
+  background: var(--sky);
+  transition: width 0.4s ease;
+}
+
+.progress-card__hint {
+  margin-top: 12rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+/* ---------- 高频知识点 ---------- */
+.points {
+  margin-top: var(--space-xl);
+}
+
+.points__title {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.points__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.point {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  height: 52rpx;
+  padding: 0 22rpx;
+  border-radius: 26rpx;
+  background: var(--bg-card);
+  border: 2rpx solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: var(--fs-tiny);
+  box-sizing: border-box;
+}
+
+.point__count {
+  font-weight: 700;
+  color: var(--coral);
+}
+
+/* ---------- 筛选 ---------- */
+.filters {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.filter {
+  height: 64rpx;
+  padding: 0 30rpx;
+  border-radius: 32rpx;
+  background: var(--bg-card);
+  border: 2rpx solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.filter--hover {
+  opacity: 0.8;
+}
+
+.filter--active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-canvas);
+}
+
+/* ---------- 错题卡 ---------- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.mistake {
+  padding: 28rpx 26rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.mistake--active {
+  opacity: 0.82;
+}
+
+.mistake__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mistake__subject {
+  height: 40rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  background: var(--brand-light);
+  color: var(--brand-deep);
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.mistake__count {
+  font-size: var(--fs-tiny);
+  color: var(--coral);
+  font-weight: 600;
+}
+
+.mistake__stem {
+  margin-top: 16rpx;
+  font-size: 30rpx;
+  color: var(--text-primary);
+  line-height: 1.55;
+  /* 最多显示 3 行，避免长题把列表撑散 */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mistake__row {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: var(--radius-md);
+  background: var(--coral-light);
+}
+
+.mistake__label {
+  flex-shrink: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+.mistake__wrong {
+  flex: 1;
+  font-size: var(--fs-body);
+  color: var(--coral);
+}
+
+.mistake__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18rpx;
+}
+
+.mistake__kp {
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+  background: var(--bg-subtle);
+  padding: 6rpx 16rpx;
+  border-radius: 16rpx;
+}
+
+.mistake__go {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--brand-deep);
+}

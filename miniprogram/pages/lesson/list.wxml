@@ -1,0 +1,80 @@
+<view class="page page--with-tabbar theme-{{theme}}">
+  <nav-bar mode="plain" />
+
+  <view class="page__content">
+
+    <!-- ============ 页头 ============ -->
+    <view class="head">
+      <view class="head__left">
+        <view class="head__title">课文同步练习</view>
+        <view class="head__sub" wx:if="{{textbook}}">
+          {{textbook.grade}}年级 · {{textbook.name}}
+        </view>
+      </view>
+      <view class="head__switch" hover-class="head__switch--active" bindtap="onSwitchTextbook">
+        切换教材
+      </view>
+    </view>
+
+    <skeleton wx:if="{{loading}}" hero="{{true}}" rows="{{2}}" />
+
+    <!-- ============ 未选教材 ============ -->
+    <empty-state
+      wx:elif="{{!textbook}}"
+      icon="book"
+      color="#FFC857"
+      text="还没有选择教材"
+      desc="选好你正在用的课本，就能同步练到对应的课文"
+      action="去选教材"
+      bind:action="onSwitchTextbook"
+    />
+
+    <!-- ============ 正常内容 ============ -->
+    <block wx:else>
+
+      <!-- 推荐下一课 -->
+      <view class="next" wx:if="{{nextLesson}}">
+        <view class="next__label">接着课本往下学</view>
+        <view class="next__title">第{{nextLesson.seq}}课 · {{nextLesson.title}}</view>
+        <view class="next__desc" wx:if="{{nextLesson.knowledgePoints.length}}">
+          知识点：{{nextLesson.knowledgePoints[0]}}
+        </view>
+
+        <view class="next__btn" hover-class="next__btn--active" bindtap="onStartNext">
+          <image class="next__btn-icon" src="{{iconPlay}}" mode="aspectFit" />
+          <text>开始练习</text>
+        </view>
+      </view>
+
+      <!-- 全部课文 -->
+      <view class="section" wx:for="{{groups}}" wx:for-item="group" wx:key="unit">
+        <view class="section__title">{{group.unit}}</view>
+
+        <view class="lessons">
+          <view
+            wx:for="{{group.list}}"
+            wx:key="id"
+            class="lesson {{item.current ? 'lesson--current' : ''}} {{item.passed ? 'lesson--passed' : ''}}"
+            hover-class="lesson--active"
+            data-id="{{item.id}}"
+            bindtap="onLessonTap"
+          >
+            <view class="lesson__seq">{{item.seq}}</view>
+            <view class="lesson__main">
+              <view class="lesson__title">{{item.title}}</view>
+              <view class="lesson__meta" wx:if="{{item.knowledgePoints.length}}">
+                {{item.knowledgePoints[0]}}
+              </view>
+            </view>
+            <view class="lesson__state" wx:if="{{item.passed}}">已练</view>
+            <view class="lesson__state lesson__state--current" wx:elif="{{item.current}}">当前</view>
+          </view>
+        </view>
+      </view>
+
+    </block>
+
+  </view>
+
+  <tab-bar current="{{1}}" />
+</view>

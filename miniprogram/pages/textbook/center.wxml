@@ -1,0 +1,87 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="教材中心" />
+
+  <view class="page__content">
+
+    <view class="head">
+      <view class="head__title">你现在用的是哪一版课本</view>
+      <view class="head__sub">选对版本，练习才能和课堂对上</view>
+    </view>
+
+    <!-- ============ 学科 ============ -->
+    <view class="filters">
+      <view
+        wx:for="{{subjectList}}"
+        wx:key="value"
+        class="filter {{subject === item.value ? 'filter--active' : ''}}"
+        hover-class="filter--hover"
+        data-value="{{item.value}}"
+        bindtap="onSubjectTap"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
+    <!-- ============ 年级 ============ -->
+    <view class="grades">
+      <view
+        wx:for="{{gradeList}}"
+        wx:key="*this"
+        class="grade {{grade === item ? 'grade--active' : ''}}"
+        hover-class="grade--hover"
+        data-value="{{item}}"
+        bindtap="onGradeTap"
+      >
+        {{item}}年级
+      </view>
+    </view>
+
+    <!-- ============ 版本列表 ============ -->
+    <skeleton wx:if="{{loading}}" rows="{{2}}" />
+
+    <empty-state
+      wx:elif="{{!textbooks.length}}"
+      icon="book"
+      color="#FFC857"
+      text="这个组合下还没有教材"
+      desc="可以拍下自己课本的目录上传，AI 会帮你整理成练习册"
+      action="添加我的教材"
+      bind:action="onAddCustom"
+    />
+
+    <view wx:else class="list">
+      <view
+        wx:for="{{textbooks}}"
+        wx:key="id"
+        class="book {{item.active ? 'book--active' : ''}}"
+        hover-class="book--hover"
+        data-id="{{item.id}}"
+        data-name="{{item.name}}"
+        bindtap="onPick"
+      >
+        <view class="book__cover">{{item.name[0]}}</view>
+
+        <view class="book__main">
+          <view class="book__name">{{item.name}}</view>
+          <view class="book__meta">
+            {{item.grade}}年级 · {{item.volume === 1 ? '上册' : '下册'}}
+            <text wx:if="{{item.isCustom}}" class="book__custom">自定义</text>
+          </view>
+        </view>
+
+        <view class="book__check" wx:if="{{item.active}}">使用中</view>
+        <view class="book__arrow" wx:else></view>
+      </view>
+    </view>
+
+    <!-- ============ 添加自定义 ============ -->
+    <view class="add" hover-class="add--active" bindtap="onAddCustom">
+      <view class="add__plus">+</view>
+      <view class="add__main">
+        <view class="add__title">找不到我的课本？</view>
+        <view class="add__desc">拍下目录页上传，AI 帮你整理成练习册</view>
+      </view>
+    </view>
+
+  </view>
+</view>

@@ -1,0 +1,444 @@
+/* ============ 家长首页 —— 设计稿 15 ============
+   与孩子端刻意区分：灰底 #F3F4F6 + 白卡 + 深灰主色 #37352F，
+   只保留少量功能色（黄/绿/蓝）作数据高亮，整体沉稳 */
+
+page {
+  background: #F3F4F6;
+}
+
+.page--parent .page__content {
+  padding-bottom: 60rpx;
+}
+
+/* ---------- 头部 ---------- */
+.head {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 8rpx 8rpx;
+}
+
+.head__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.head__title {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #1F2937;
+}
+
+.head__sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #6B7280;
+}
+
+.head__avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(31, 41, 55, 0.08);
+  flex-shrink: 0;
+}
+
+.head__avatar--active {
+  opacity: 0.8;
+}
+
+.head__avatar-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* ---------- 多孩切换 ---------- */
+.child-scroll {
+  margin-top: 16rpx;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.child-scroll__row {
+  display: inline-flex;
+  gap: 16rpx;
+  padding: 4rpx 0;
+}
+
+.child-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 60rpx;
+  padding: 0 28rpx;
+  border-radius: 30rpx;
+  background: #FFFFFF;
+  color: #6B7280;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.child-chip--on {
+  background: #37352F;
+  color: #FFFFFF;
+}
+
+.child-chip--active {
+  opacity: 0.8;
+}
+
+/* ---------- 本周概览（深色主卡） ---------- */
+.overview {
+  margin-top: 24rpx;
+  padding: 36rpx 32rpx;
+  border-radius: 28rpx;
+  background: #37352F;
+  color: #FFFFFF;
+}
+
+.overview__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.overview__title {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.overview__date {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.overview__badge {
+  height: 48rpx;
+  padding: 0 22rpx;
+  border-radius: 24rpx;
+  background: #7DD3A0;
+  color: #1F2937;
+  font-size: 22rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.overview__metrics {
+  margin-top: 32rpx;
+  display: flex;
+}
+
+.metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.metric__num {
+  font-size: 52rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.metric__num--yellow { color: #FFC857; }
+.metric__num--green { color: #7DD3A0; }
+.metric__num--blue { color: #6BB6E0; }
+
+.metric__label {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- 空状态 ---------- */
+.empty-card {
+  margin-top: 32rpx;
+  padding: 56rpx 32rpx;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.empty-card__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.empty-card__desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #9CA3AF;
+  line-height: 1.6;
+}
+
+.empty-card__btn {
+  margin-top: 32rpx;
+  height: 88rpx;
+  padding: 0 64rpx;
+  border-radius: 44rpx;
+  background: #37352F;
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.empty-card__btn--active {
+  opacity: 0.85;
+}
+
+/* ---------- 分区标题 ---------- */
+.section-title {
+  margin-top: 40rpx;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.card {
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.05);
+}
+
+/* ---------- 周趋势柱状图 ---------- */
+.week {
+  padding: 28rpx 24rpx;
+}
+
+.week__chart {
+  display: flex;
+  align-items: flex-end;
+  height: 200rpx;
+}
+
+.week__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.week__bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.week__bar {
+  width: 28rpx;
+  min-height: 8rpx;
+  border-radius: 14rpx 14rpx 6rpx 6rpx;
+  background: #37352F;
+  transition: height 0.3s ease;
+}
+
+.week__label {
+  margin-top: 12rpx;
+  font-size: 20rpx;
+  color: #9CA3AF;
+}
+
+/* ---------- 需要关注 ---------- */
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 26rpx 28rpx;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(31, 41, 55, 0.05);
+}
+
+.alert__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alert__icon--coral {
+  background: #FFEFEB;
+}
+
+.alert__icon-img {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.alert__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert__title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert__desc {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #6B7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 最近一次批改 ---------- */
+.latest {
+  padding: 28rpx 30rpx;
+}
+
+.latest--active {
+  opacity: 0.85;
+}
+
+.latest__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tag {
+  height: 40rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.tag--coral {
+  background: #FFEFEB;
+  color: #F0705C;
+}
+
+.latest__time {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.latest__score-row {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.latest__score {
+  font-size: 64rpx;
+  font-weight: 800;
+  color: #1F2937;
+  line-height: 1;
+}
+
+.latest__score-unit {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B7280;
+  margin-left: 6rpx;
+}
+
+.latest__arrow {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #6B7280;
+  padding-bottom: 8rpx;
+}
+
+/* ---------- 快捷操作 ---------- */
+.ops {
+  padding: 8rpx 28rpx;
+}
+
+.op {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  height: 104rpx;
+  border-bottom: 1rpx solid #F3F4F6;
+}
+
+.op:last-child {
+  border-bottom: none;
+}
+
+.op--active {
+  opacity: 0.7;
+}
+
+.op__icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.op__icon--sky { background: #E7F3FB; }
+.op__icon--grass { background: #E9F8F0; }
+
+.op__icon-img {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.op__text {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.op__arrow {
+  font-size: 32rpx;
+  color: #C4C8CE;
+}
+
+/* ---------- 切换端 ---------- */
+.switch {
+  margin-top: 48rpx;
+  height: 96rpx;
+  border-radius: 999rpx;
+  color: #6B7280;
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch--active {
+  opacity: 0.7;
+}

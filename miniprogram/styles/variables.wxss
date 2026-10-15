@@ -1,0 +1,120 @@
+/**
+ * 设计变量 —— 与设计稿严格对齐
+ *
+ * 使用方式：所有色值、圆角、间距都走这里的变量，
+ * 深色模式只需覆盖同名变量，页面代码不需要改。
+ */
+
+/* ============ 浅色（默认）============ */
+page,
+.theme-light {
+  /* 背景 */
+  --bg-canvas: #FFFBF0;        /* 画布底 */
+  --bg-page: #F6F1E7;          /* 页面底层 */
+  --bg-card: #FFFFFF;          /* 卡片白 */
+  --bg-subtle: #FFFCF5;        /* 极浅底 */
+
+  /* 主色 · 绘本黄 */
+  --brand: #FFC857;
+  --brand-deep: #E0A32E;
+  --brand-light: #FFF4DC;
+
+  /* 辅色 */
+  --coral: #FF8C7A;
+  --coral-light: #FFF1ED;
+  --sky: #6BB6E0;
+  --sky-light: #EDF6FC;
+  --grass: #7DD3A0;
+  --grass-light: #EDF8F1;
+
+  /* 文字 · 暖黑 */
+  --text-primary: #37352F;
+  --text-secondary: #8B8578;
+  --text-tertiary: #A09884;
+  --text-quaternary: #A8A192;
+  --text-on-brand: #37352F;
+
+  /* 描边与分隔 */
+  --border: #E8E2D6;
+  --border-light: #F0EBE0;
+  --divider: #EFEAE0;
+
+  /* 状态 */
+  --success: #7DD3A0;
+  --warning: #FFC857;
+  --danger: #FF8C7A;
+
+  /* 进度条 */
+  --progress-track: #F5EDDA;
+
+  /* 阴影（黄色调，与设计稿一致） */
+  --shadow-card: 0 8rpx 24rpx rgba(255, 200, 87, 0.16);
+  --shadow-soft: 0 4rpx 14rpx rgba(255, 200, 87, 0.12);
+  --shadow-float: 0 12rpx 32rpx rgba(0, 0, 0, 0.10);
+
+  /* 遮罩 */
+  --mask: rgba(55, 53, 47, 0.45);
+}
+
+/* ============ 深色 ============ */
+.theme-dark {
+  --bg-canvas: #1C1B22;
+  --bg-page: #1C1B22;
+  --bg-card: #26252E;
+  --bg-subtle: #2E2D38;
+
+  --brand: #FFC857;
+  --brand-deep: #E0A32E;
+  --brand-light: #3B3524;
+
+  --coral: #FF8C7A;
+  --coral-light: #3D2F2E;
+  --sky: #6BB6E0;
+  --sky-light: #26333D;
+  --grass: #7DD3A0;
+  --grass-light: #2A3A32;
+
+  --text-primary: #F2EFE8;
+  --text-secondary: #9B97A8;
+  --text-tertiary: #6E6A7C;
+  --text-quaternary: #6E6A7C;
+  --text-on-brand: #37352F;
+
+  --border: #3B3A46;
+  --border-light: #33323C;
+  --divider: #33323C;
+
+  --progress-track: #33323C;
+
+  --shadow-card: none;
+  --shadow-soft: none;
+  --shadow-float: 0 12rpx 32rpx rgba(0, 0, 0, 0.4);
+
+  --mask: rgba(0, 0, 0, 0.6);
+}
+
+/* ============ 圆角与间距（深浅色通用）============ */
+page {
+  --radius-sm: 12rpx;
+  --radius-md: 20rpx;
+  --radius-lg: 24rpx;
+  --radius-xl: 28rpx;
+  --radius-2xl: 32rpx;
+  --radius-pill: 999rpx;
+
+  --space-xs: 8rpx;
+  --space-sm: 12rpx;
+  --space-md: 16rpx;
+  --space-lg: 20rpx;
+  --space-xl: 24rpx;
+  --space-2xl: 32rpx;
+
+  /* 字号 */
+  --fs-h1: 52rpx;
+  --fs-h2: 44rpx;
+  --fs-h3: 36rpx;
+  --fs-title: 32rpx;
+  --fs-body: 28rpx;
+  --fs-caption: 26rpx;
+  --fs-tiny: 22rpx;
+}

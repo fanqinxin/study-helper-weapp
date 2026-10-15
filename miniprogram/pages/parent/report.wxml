@@ -1,0 +1,71 @@
+<view class="page page--parent theme-{{theme}}">
+  <nav-bar mode="title" title="第 {{weekNo}} 周学习报告" />
+
+  <view class="page__content">
+
+    <!-- ============ 本周总评 ============ -->
+    <view class="sum">
+      <view class="sum__head">
+        <view class="sum__star">
+          <image class="sum__star-img" src="{{iconStar}}" mode="aspectFit" />
+        </view>
+        <view class="sum__head-main">
+          <view class="sum__title">本周总评：{{summary.levelText}}</view>
+          <view class="sum__sub">{{summary.trendText}}</view>
+        </view>
+      </view>
+      <view class="sum__metrics">
+        <view class="smetric">
+          <view class="smetric__num">{{summary.homeworkCount}}</view>
+          <view class="smetric__label">作业批改</view>
+        </view>
+        <view class="smetric">
+          <view class="smetric__num smetric__num--dark">{{summary.scoreRate}}%</view>
+          <view class="smetric__label">平均正确率</view>
+        </view>
+        <view class="smetric">
+          <view class="smetric__num smetric__num--green">{{summary.mistakeCount}}</view>
+          <view class="smetric__label">待巩固错题</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ============ 各科投入分布 ============ -->
+    <view class="card dist" wx:if="{{subjects.length}}">
+      <view class="dist__head">
+        <view class="dist__title">各科错题分布</view>
+        <view class="dist__total">共 {{subjects.length}} 科</view>
+      </view>
+      <view wx:for="{{subjects}}" wx:key="name" class="dist__row">
+        <view class="dist__name">{{item.name}}</view>
+        <view class="dist__track">
+          <view class="dist__bar" style="width: {{item.percent}}%; background: {{item.color}};"></view>
+        </view>
+        <view class="dist__value">{{item.count}} 题</view>
+      </view>
+      <view class="dist__note">错题越集中的科目，越值得周末安排一次针对性练习</view>
+    </view>
+
+    <!-- ============ AI 教师点评 ============ -->
+    <view class="comment">
+      <view class="comment__title">
+        <view class="comment__dot"></view>
+        AI 教师点评
+      </view>
+      <view class="comment__body">{{comment}}</view>
+    </view>
+
+    <!-- ============ 底部操作 ============ -->
+    <view class="actions">
+      <view class="actions__primary" hover-class="actions__btn--active" bindtap="onGoPractice">
+        生成巩固练习
+      </view>
+      <view class="actions__secondary" hover-class="actions__btn--active" bindtap="onEncourage">
+        留言鼓励
+      </view>
+    </view>
+
+    <view class="footer-note">报告基于本周学习数据生成，转发给孩子一起看看吧</view>
+
+  </view>
+</view>

@@ -1,0 +1,84 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="错题重做" />
+
+  <skeleton wx:if="{{loading}}" rows="{{2}}" />
+
+  <empty-state
+    wx:elif="{{!mistake}}"
+    icon="mistake"
+    color="#FF8C7A"
+    text="这道错题不存在"
+    desc="可能已经被删除了"
+    action="返回错题本"
+    bind:action="onBack"
+  />
+
+  <view wx:else class="page__content">
+
+    <!-- ============ 题目 ============ -->
+    <view class="card">
+      <view class="card__head">
+        <view class="card__subject">{{subjectName}}</view>
+        <view class="card__count" wx:if="{{mistake.wrongCount > 1}}">错过 {{mistake.wrongCount}} 次</view>
+      </view>
+
+      <view class="card__stem">{{mistake.stem}}</view>
+
+      <view class="card__wrong">
+        <view class="card__label">上次写的是</view>
+        <view class="card__wrong-value">{{mistake.studentAns || '未作答'}}</view>
+      </view>
+    </view>
+
+    <!-- ============ 未提交：作答 ============ -->
+    <block wx:if="{{!submitted}}">
+      <view class="answer">
+        <view class="answer__title">重新做一遍</view>
+        <input
+          class="answer__input"
+          value="{{answer}}"
+          placeholder="写下你的答案"
+          placeholder-class="answer__ph"
+          confirm-type="done"
+          bindinput="onInput"
+          bindconfirm="onSubmit"
+        />
+      </view>
+
+      <view class="answer__btn" hover-class="answer__btn--active" bindtap="onSubmit">
+        提交答案
+      </view>
+    </block>
+
+    <!-- ============ 已提交：结果 ============ -->
+    <block wx:else>
+      <view class="result {{result.isCorrect ? 'result--right' : 'result--wrong'}}">
+        <view class="result__badge">{{result.isCorrect ? '答对了' : '还不对'}}</view>
+        <view class="result__msg">{{result.message}}</view>
+
+        <view class="result__row">
+          <view class="result__label">正确答案</view>
+          <view class="result__value">{{result.correctAnswer}}</view>
+        </view>
+      </view>
+
+      <view class="analysis" wx:if="{{result.analysis}}">
+        <view class="analysis__title">
+          <image class="analysis__icon" src="{{iconSpark}}" mode="aspectFit" />
+          <text>老师讲解</text>
+        </view>
+        <view class="analysis__text">{{result.analysis}}</view>
+      </view>
+
+      <view class="actions">
+        <view class="btn btn--secondary" hover-class="btn--active" bindtap="onRetryAgain" wx:if="{{!result.isCorrect}}">
+          再做一次
+        </view>
+        <view class="btn btn--primary" hover-class="btn--active" bindtap="onBack">
+          {{result.isCorrect ? '回错题本' : '先看懂了'}}
+        </view>
+      </view>
+    </block>
+
+  </view>
+</view>

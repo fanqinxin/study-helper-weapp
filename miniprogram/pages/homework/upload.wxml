@@ -1,0 +1,88 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="上传作业">
+    <quota-chip slot="right" left="{{quotaLeft}}" low="{{quotaLow}}" />
+  </nav-bar>
+
+  <view class="page__content">
+
+    <!-- ============ 学科选择 ============ -->
+    <view class="field">
+      <view class="field__label">这是哪一科</view>
+      <view class="subjects">
+        <view
+          wx:for="{{subjectList}}"
+          wx:key="value"
+          class="subject {{subject === item.value ? 'subject--active' : ''}}"
+          hover-class="subject--hover"
+          data-value="{{item.value}}"
+          bindtap="onSubjectTap"
+        >
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <!-- ============ 图片区 ============ -->
+    <view class="field">
+      <view class="field__label">
+        拍清楚一点，AI 才看得准
+        <text class="field__count">{{images.length}}/{{maxCount}}</text>
+      </view>
+
+      <view class="shots">
+        <view
+          wx:for="{{images}}"
+          wx:key="path"
+          class="shot"
+        >
+          <image class="shot__img" src="{{item.path}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreview" />
+          <view class="shot__del" catchtap="onRemove" data-index="{{index}}">×</view>
+        </view>
+
+        <view
+          wx:if="{{images.length < maxCount}}"
+          class="shot shot--add"
+          hover-class="shot--add-hover"
+          bindtap="onChoose"
+        >
+          <image class="shot__add-icon" src="{{iconCamera}}" mode="aspectFit" />
+          <view class="shot__add-text">{{images.length ? '再加一张' : '拍照/相册'}}</view>
+        </view>
+      </view>
+
+      <view class="tips" wx:if="{{images.length}}">
+        <view class="tips__item">已压缩至 {{totalSize}}，上传更快也更省额度</view>
+      </view>
+      <view class="tips" wx:else>
+        <view class="tips__item">· 光线充足，题目完整的照片识别更准</view>
+        <view class="tips__item">· 一次拍全整页，比分成多张更划算</view>
+      </view>
+    </view>
+
+    <!-- ============ 消耗提示 ============ -->
+    <view class="cost">
+      <view class="cost__left">
+        <view class="cost__title">本次批改消耗 1 次</view>
+        <view class="cost__desc">做完题、玩小游戏不消耗额度</view>
+      </view>
+      <view class="cost__quota">
+        <view class="cost__num {{quotaLow ? 'cost__num--low' : ''}}">
+          {{quotaLeft < 0 ? '不限' : quotaLeft}}
+        </view>
+        <view class="cost__unit">剩余</view>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- ============ 底部提交 ============ -->
+  <view class="footer">
+    <view
+      class="submit {{images.length && !submitting ? '' : 'submit--disabled'}}"
+      hover-class="submit--active"
+      bindtap="onSubmit"
+    >
+      {{submitting ? '提交中…' : '提交给 AI 批改'}}
+    </view>
+  </view>
+</view>

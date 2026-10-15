@@ -1,0 +1,80 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="识字小游戏" />
+
+  <!-- ============ 开始页 ============ -->
+  <view wx:if="{{stage === 'ready'}}" class="wrap">
+    <view class="intro">
+      <view class="intro__badge">每天玩一局</view>
+      <view class="intro__title">看拼音，选汉字</view>
+      <view class="intro__desc">一局 {{5}} 题，全对有小星星</view>
+      <view class="intro__tip">做游戏不消耗 AI 批改额度</view>
+    </view>
+
+    <view class="start" hover-class="start--active" bindtap="onStart">开始游戏</view>
+  </view>
+
+  <!-- ============ 游戏中 ============ -->
+  <view wx:elif="{{stage === 'playing'}}" class="wrap">
+
+    <view class="topbar">
+      <view class="topbar__progress">{{index + 1}} / {{items.length}}</view>
+      <view class="topbar__combo" wx:if="{{combo > 1}}">连对 {{combo}} 题</view>
+    </view>
+
+    <view class="quiz">
+      <view class="quiz__pinyin">{{current.pinyin}}</view>
+      <view class="quiz__hint">选出正确的汉字</view>
+    </view>
+
+    <view class="options">
+      <view
+        wx:for="{{options}}"
+        wx:key="word"
+        class="opt
+          {{judged && item.word === current.word ? 'opt--right' : ''}}
+          {{judged && item.word === picked && item.word !== current.word ? 'opt--wrong' : ''}}"
+        hover-class="{{judged ? '' : 'opt--hover'}}"
+        data-word="{{item.word}}"
+        bindtap="onPick"
+      >
+        {{item.word}}
+      </view>
+    </view>
+
+    <view class="feedback" wx:if="{{judged}}">
+      <view class="feedback__text {{correct ? 'feedback__text--good' : 'feedback__text--bad'}}">
+        {{correct ? '答对了！' : '正确答案是 ' + current.word}}
+      </view>
+    </view>
+
+  </view>
+
+  <!-- ============ 结束页 ============ -->
+  <view wx:else class="wrap">
+    <view class="over">
+      <image class="over__star" src="{{iconStar}}" mode="aspectFit" />
+      <view class="over__score">{{score}}</view>
+      <view class="over__label">本局得分</view>
+
+      <view class="over__stats">
+        <view class="over__stat">
+          <view class="over__stat-num">{{bestCombo}}</view>
+          <view class="over__stat-label">最高连对</view>
+        </view>
+        <view class="over__stat">
+          <view class="over__stat-num">{{score / 10}}</view>
+          <view class="over__stat-label">答对题数</view>
+        </view>
+      </view>
+
+      <view class="over__tip" wx:if="{{score === 50}}">全对！识字小达人就是你</view>
+      <view class="over__tip" wx:elif="{{score >= 30}}">表现不错，再练一局更熟</view>
+      <view class="over__tip" wx:else>没关系，多玩几局就记住啦</view>
+    </view>
+
+    <view class="actions">
+      <view class="btn btn--secondary" hover-class="btn--active" bindtap="onBackToPlan">回计划</view>
+      <view class="btn btn--primary" hover-class="btn--active" bindtap="onRestart">再来一局</view>
+    </view>
+  </view>
+</view>

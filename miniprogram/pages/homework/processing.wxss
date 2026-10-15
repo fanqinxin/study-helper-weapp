@@ -1,0 +1,162 @@
+/* ============ AI 批改中 —— 设计稿 14 ============ */
+
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 64rpx 120rpx;
+  box-sizing: border-box;
+}
+
+/* ---------- 呼吸动画 ---------- */
+.anim {
+  position: relative;
+  width: 260rpx;
+  height: 260rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anim__ring {
+  position: absolute;
+  border-radius: 50%;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.anim__ring--1 {
+  width: 260rpx;
+  height: 260rpx;
+  border-width: 4rpx;
+  border-color: rgba(255, 200, 87, 0.35);
+  animation: pulse 2.4s ease-out infinite;
+}
+
+.anim__ring--2 {
+  width: 200rpx;
+  height: 200rpx;
+  border-width: 4rpx;
+  border-color: rgba(255, 200, 87, 0.6);
+  animation: pulse 2.4s ease-out 0.6s infinite;
+}
+
+.anim__core {
+  position: relative;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #FFD87A, #FFC857 60%, #F5B93C);
+  color: #37352F;
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 32rpx rgba(224, 163, 46, 0.3);
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.75); opacity: 0.9; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* ---------- 文案与进度 ---------- */
+.step {
+  margin-top: 56rpx;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.prog {
+  margin-top: var(--space-2xl);
+  width: 100%;
+  height: 18rpx;
+  border-radius: 9rpx;
+  background: var(--progress-track);
+  overflow: hidden;
+}
+
+.prog__fill {
+  height: 100%;
+  border-radius: 9rpx;
+  background: var(--brand);
+  transition: width 0.6s ease;
+}
+
+.elapsed {
+  margin-top: var(--space-md);
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.notes {
+  margin-top: 72rpx;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.notes__item {
+  font-size: var(--fs-tiny);
+  color: var(--text-quaternary);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ---------- 失败态 ---------- */
+.fail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.fail__icon {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: var(--coral-light);
+  color: var(--coral);
+  font-size: 72rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fail__title {
+  margin-top: var(--space-xl);
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fail__msg {
+  margin-top: var(--space-md);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.fail__tip {
+  margin-top: var(--space-sm);
+  font-size: var(--fs-tiny);
+  color: var(--grass);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  width: 100%;
+  margin-top: 72rpx;
+}
+
+.actions .btn {
+  flex: 1;
+}

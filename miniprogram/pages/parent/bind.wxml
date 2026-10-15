@@ -1,0 +1,64 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="绑定孩子" showBack="{{false}}" />
+
+  <view class="page__content">
+
+    <!-- ============ 说明 ============ -->
+    <view class="hero">
+      <image class="hero__icon" src="{{iconShield}}" mode="aspectFit" />
+      <view class="hero__title">输入孩子给你的邀请码</view>
+      <view class="hero__desc">
+        孩子在「我的 → 邀请家长查看」里可以看到一串码，
+        输入后就能看到学习报告
+      </view>
+    </view>
+
+    <!-- ============ 输入 ============ -->
+    <view class="form">
+      <view class="form__label">邀请码</view>
+      <input
+        class="form__input"
+        value="{{code}}"
+        maxlength="12"
+        placeholder="例如 A1B2C3D4E5"
+        placeholder-class="form__ph"
+        confirm-type="done"
+        bindinput="onInput"
+        bindconfirm="onBind"
+      />
+      <view class="form__hint">不区分大小写，字母和数字组成</view>
+
+      <view
+        class="form__btn {{code.length >= 6 ? '' : 'form__btn--disabled'}}"
+        hover-class="form__btn--active"
+        bindtap="onBind"
+      >
+        {{submitting ? '绑定中…' : '确认绑定'}}
+      </view>
+    </view>
+
+    <!-- ============ 已绑定孩子 ============ -->
+    <view class="children" wx:if="{{children.length}}">
+      <view class="children__title">已绑定 {{children.length}} 个孩子</view>
+
+      <view wx:for="{{children}}" wx:key="uid" class="child">
+        <view class="child__avatar">{{item.nickname ? item.nickname[0] : '小'}}</view>
+        <view class="child__main">
+          <view class="child__name">{{item.nickname || '小朋友'}}</view>
+          <view class="child__meta">{{item.grade ? item.grade + '年级' : '未设置年级'}}</view>
+        </view>
+        <view class="child__badge">已绑定</view>
+      </view>
+
+      <view class="children__btn" hover-class="children__btn--active" bindtap="onGoHome">
+        查看学习报告
+      </view>
+    </view>
+
+    <!-- ============ 切换端 ============ -->
+    <view class="switch" hover-class="switch--active" bindtap="onSwitchToChild">
+      我不是家长，切换到孩子端
+    </view>
+
+  </view>
+</view>

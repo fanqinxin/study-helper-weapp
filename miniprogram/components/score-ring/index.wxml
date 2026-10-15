@@ -1,0 +1,32 @@
+<!-- 进度环：用 SVG 描边+虚线偏移实现，小程序原生支持 -->
+<view class="ring" style="width: {{viewSize}}rpx; height: {{viewSize}}rpx;">
+  <svg class="ring__svg" viewBox="0 0 {{viewSize}} {{viewSize}}">
+    <!-- 底环 -->
+    <circle
+      cx="{{viewSize / 2}}"
+      cy="{{viewSize / 2}}"
+      r="{{radius}}"
+      fill="none"
+      stroke="{{track}}"
+      stroke-width="{{strokeWidth}}"
+    />
+    <!-- 进度环 -->
+    <circle
+      cx="{{viewSize / 2}}"
+      cy="{{viewSize / 2}}"
+      r="{{radius}}"
+      fill="none"
+      stroke="{{color}}"
+      stroke-width="{{strokeWidth}}"
+      stroke-linecap="round"
+      stroke-dasharray="{{circumference}}"
+      stroke-dashoffset="{{offset}}"
+      transform="rotate(-90 {{viewSize / 2}} {{viewSize / 2}})"
+    />
+  </svg>
+
+  <view class="ring__center">
+    <view class="ring__value" style="color: {{color}};">{{label || displayScore}}</view>
+    <view class="ring__sub" wx:if="{{sub}}">{{sub}}</view>
+  </view>
+</view>

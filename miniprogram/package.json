@@ -1,0 +1,11 @@
+{
+  "name": "study-helper",
+  "version": "1.0.0",
+  "description": "小学生同步学习小程序",
+  "main": "app.js",
+  "scripts": {
+    "lint": "echo \"请用微信开发者工具打开本项目\""
+  },
+  "keywords": ["weapp", "education"],
+  "license": "UNLICENSED"
+}

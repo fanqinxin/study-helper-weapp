@@ -1,0 +1,252 @@
+/* ============ 学习计划 —— 设计稿 06 ============ */
+
+.head {
+  padding: var(--space-sm) 0 var(--space-lg);
+}
+
+.head__title {
+  font-size: 46rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.head__sub {
+  margin-top: 8rpx;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ---------- 今日进度 ---------- */
+.today {
+  padding: 32rpx 30rpx 28rpx;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(150deg, #FFE0A8 0%, #FFC857 62%, #F5B93C 100%);
+  box-shadow: 0 12rpx 32rpx rgba(224, 163, 46, 0.24);
+}
+
+.today__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.today__num {
+  font-size: 76rpx;
+  font-weight: 700;
+  color: var(--text-on-brand);
+  line-height: 1;
+}
+
+.today__slash {
+  font-size: 40rpx;
+  color: rgba(55, 53, 47, 0.5);
+  margin-left: 4rpx;
+}
+
+.today__label {
+  margin-top: 8rpx;
+  font-size: var(--fs-tiny);
+  color: rgba(55, 53, 47, 0.6);
+}
+
+.today__percent {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: rgba(55, 53, 47, 0.7);
+}
+
+.today__track {
+  margin-top: 24rpx;
+  height: 18rpx;
+  border-radius: 9rpx;
+  background: rgba(255, 255, 255, 0.52);
+  overflow: hidden;
+}
+
+.today__fill {
+  height: 100%;
+  border-radius: 9rpx;
+  background: #FFFFFF;
+  transition: width 0.35s ease;
+}
+
+/* ---------- 任务 ---------- */
+.tasks {
+  margin-top: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 24rpx 26rpx;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.task--done {
+  opacity: 0.6;
+}
+
+/* 勾选框 */
+.task__check {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.task__check--on {
+  background: var(--grass);
+  border-color: var(--grass);
+}
+
+/* 对勾用 CSS 画 */
+.task__tick {
+  width: 12rpx;
+  height: 22rpx;
+  border-right: 4rpx solid #FFFFFF;
+  border-bottom: 4rpx solid #FFFFFF;
+  transform: rotate(45deg) translate(-2rpx, -2rpx);
+}
+
+.task__body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.task__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.task__icon-img {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.task__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.task__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task--done .task__title {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.task__meta {
+  margin-top: 4rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.task__arrow {
+  width: 14rpx;
+  height: 14rpx;
+  border-top: 3rpx solid var(--text-quaternary);
+  border-right: 3rpx solid var(--text-quaternary);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ---------- 本周 ---------- */
+.week {
+  margin-top: var(--space-2xl);
+  padding: 30rpx 28rpx 26rpx;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.week__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.week__title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.week__rate {
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  color: var(--brand-deep);
+}
+
+.week__chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  height: 220rpx;
+  margin-top: var(--space-xl);
+}
+
+.week__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.week__bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.week__bar {
+  width: 32rpx;
+  min-height: 8rpx;
+  border-radius: 16rpx;
+  background: var(--brand);
+  transition: height 0.4s ease;
+}
+
+.week__label {
+  margin-top: 12rpx;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}
+
+.week__foot {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1rpx solid var(--divider);
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+  text-align: center;
+}

@@ -1,0 +1,10 @@
+<view
+  class="chip {{low ? 'chip--low' : ''}}"
+  hover-class="{{clickable ? 'chip--active' : ''}}"
+  bindtap="onTap"
+>
+  <image class="chip__icon" src="{{boltIcon}}" mode="aspectFit" />
+  <text class="chip__text">
+    {{left < 0 ? '不限次' : '剩 ' + left + ' 次'}}
+  </text>
+</view>
