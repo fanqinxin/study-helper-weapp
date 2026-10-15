@@ -1,0 +1,55 @@
+# ============================================================
+# 行尾与文本属性统一
+#
+# 背景：Windows 开发机上默认 core.autocrlf=true，会把文本文件
+# 在工作区转成 CRLF。这对 shell 脚本是致命的——Linux 容器里
+# /bin/sh 读到 `set -e\r` 会报 "not found"，镜像直接起不来。
+#
+# 策略：仓库内一律存 LF（text=auto），由 Git 负责双向转换；
+# 需要保留原始字节的文件（图片/PDF）标记为 binary，
+# 避免 Git 误判为文本而损坏内容。
+# ============================================================
+
+# 默认：Git 自动判定文本文件，仓库内统一 LF
+* text=auto eol=lf
+
+# ---------- 明确要求 LF 的文件（绝对不能是 CRLF）----------
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.sql           text eol=lf
+Makefile        text eol=lf
+
+# ---------- 代码与配置（统一 LF）----------
+*.js            text eol=lf
+*.json          text eol=lf
+*.wxss          text eol=lf
+*.wxml          text eol=lf
+*.md            text eol=lf
+.gitignore      text eol=lf
+.gitattributes  text eol=lf
+
+# ---------- 二进制：不做任何转换 ----------
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.webp          binary
+*.ico           binary
+*.pdf           binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.zip           binary
+*.mp4           binary
+
+# ---------- 明确禁止 diff（避免污染 review）----------
+*.pdf           -diff
+*.png           -diff
+*.jpg           -diff
+
+# ---------- 语言统计归类（影响 GitLab 仓库语言识别）----------
+*.wxss          linguist-language=CSS
+*.wxml          linguist-language=HTML
+*.ardot         linguist-generated
