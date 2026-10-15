@@ -83,7 +83,9 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    image: study-helper-server:latest
+    # 本地构建时用 study-helper-server:latest；
+    # 服务器部署时在 .env 里设 IMAGE_TAG 指向私有仓库镜像即可拉取
+    image: ${IMAGE_TAG:-study-helper-server:latest}
     container_name: sh-api
     restart: unless-stopped
     command: ['node', 'src/app.js']
@@ -118,7 +120,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    image: study-helper-server:latest
+    image: ${IMAGE_TAG:-study-helper-server:latest}
     container_name: sh-worker
     restart: unless-stopped
     command: ['node', 'src/jobs/homeworkWorker.js']
@@ -152,7 +154,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    image: study-helper-server:latest
+    image: ${IMAGE_TAG:-study-helper-server:latest}
     container_name: sh-migrate
     command: ['node', 'src/models/migrate.js']
     env_file:

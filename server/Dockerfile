@@ -36,6 +36,19 @@ FROM node:20-alpine AS runner
 ENV NODE_ENV=production \
     TZ=Asia/Shanghai
 
+# 构建元信息，由 CI 通过 --build-arg 注入；本地构建时留默认值。
+# 写入 OCI 标准 label，方便 docker inspect 反查镜像来源与构建时间。
+ARG BUILD_DATE=""
+ARG VCS_REF=""
+ARG BUILD_VERSION=""
+
+LABEL org.opencontainers.image.title="study-helper-server" \
+      org.opencontainers.image.description="小学生同步学习小程序后端（api / worker 共用镜像）" \
+      org.opencontainers.image.created="$BUILD_DATE" \
+      org.opencontainers.image.revision="$VCS_REF" \
+      org.opencontainers.image.version="$BUILD_VERSION" \
+      org.opencontainers.image.licenses="UNLICENSED"
+
 # tini 负责转达信号，避免 node 收不到 SIGTERM 导致优雅退出失效
 # wget 用于容器健康检查；su-exec 用于入口脚本里从 root 降权到 node
 RUN apk add --no-cache tini wget su-exec \

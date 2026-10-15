@@ -12,8 +12,36 @@ server/             Node.js + Express + MySQL + Redis 后端
   .env.docker.example   Docker 部署环境变量模板
 docker/initdb/      MySQL 容器首次初始化脚本
 docker-compose.yml  一键编排 api / worker / mysql / redis
+.github/workflows/  GitHub Actions：质检 + 构建推送镜像到阿里云
+docs/CI-CD说明.md    CI 变量配置、标签规则、回滚操作
 docs/               开发交底文档
 ```
+
+## 镜像仓库
+
+后端镜像由 GitHub Actions 自动构建推送（工作流：`.github/workflows/docker-build.yml`）到：
+
+```
+registry.cn-shenzhen.aliyuncs.com/fanqx/study-helper-server
+```
+
+| 事件 | 是否构建 | 推送标签 |
+|---|---|---|
+| 推送到 `main` | ✅ | `latest`、`main`、`main-<短SHA>` |
+| 打标签（如 `v1.0.0`） | ✅ | `v1.0.0`、`v1.0.0-<短SHA>` |
+| 提 PR 到 `main` | ❌ 只跑质检 | — |
+
+`latest` 只跟随 `main` 移动 —— 给历史版本补打 tag 不会回退线上镜像。
+质检（verify）会检查后端 JS 语法、compose 结构、LF 行尾、小程序结构，任一项失败即中断构建。
+
+首次使用需在仓库 **Settings → Secrets and variables → Actions** 添加两个密钥：
+
+| Secret | 值 |
+|---|---|
+| `REGISTRY_USER` | 阿里云账号 / RAM 子账号 |
+| `REGISTRY_PASSWORD` | 容器镜像服务的固定密码 |
+
+完整说明（标签策略、回滚步骤、常见错误处理）见 [`docs/CI-CD说明.md`](docs/CI-CD说明.md)。
 
 ## 方式一：Docker 部署（推荐）
 
@@ -35,6 +63,17 @@ docker compose --profile tools run --rm migrate
 docker compose ps
 docker compose logs -f api
 curl http://127.0.0.1:3000/api/v1/health
+```
+
+**用 CI 构建好的镜像部署**（服务器上不构建，直接拉）：
+
+```bash
+# .env 里指定镜像来源
+echo 'IMAGE_TAG=registry.cn-shenzhen.aliyuncs.com/fanqx/study-helper-server:latest' >> .env
+
+docker login registry.cn-shenzhen.aliyuncs.com
+docker compose pull api worker
+docker compose up -d --no-build api worker
 ```
 
 常用运维命令：
