@@ -7,6 +7,9 @@
 #   - 推送到 main            → 校验通过后构建推送（latest + main + 短SHA）
 #   - 推送 v* 形式的 tag     → 校验通过后构建推送（tag 名 + 短SHA，不动 latest）
 #   - Pull Request           → 只跑校验，不构建不推送
+#   - 手动触发（Actions 页 Run workflow）
+#        默认只跑校验；勾选 push_image 才构建推送
+#        分支用 main 时推 latest，用其他分支只推分支名标签，不动 latest
 #
 # 需要在仓库配置的 Secrets（Settings → Secrets and variables → Actions）：
 #   REGISTRY_USER     阿里云容器镜像服务用户名（主账号或 RAM 用户）
@@ -25,6 +28,18 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  # 允许在 Actions 页手动触发（默认只校验，勾选后才构建推送）
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: '构建并推送镜像（不勾选则只跑校验）'
+        type: boolean
+        default: false
+      image_tag:
+        description: '自定义镜像标签（留空则按分支名推导）'
+        type: string
+        required: false
+        default: ''
 
 # 同一分支的并发构建取消旧的，避免重复消耗
 concurrency:
@@ -124,7 +139,8 @@ jobs:
     name: 构建并推送
     runs-on: ubuntu-latest
     needs: verify
-    if: github.event_name == 'push'
+    # push 事件直接构建；手动触发需要勾选 push_image 才构建
+    if: github.event_name == 'push' || inputs.push_image
     permissions:
       contents: read
     steps:
@@ -135,6 +151,7 @@ jobs:
         run: |
           FULL_IMAGE="$REGISTRY/$IMAGE_NAMESPACE/$IMAGE_NAME"
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          CUSTOM_TAG="${{ inputs.image_tag }}"
 
           # 是 tag 触发还是分支触发
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
@@ -144,13 +161,24 @@ jobs:
             MOVE_LATEST="false"
           else
             REF_TAG="${GITHUB_REF#refs/heads/}"
-            MOVE_LATEST="true"
+            # 手动触发时：只有 main 分支才移动 latest，其他分支不动
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "$REF_TAG" != "main" ]; then
+              MOVE_LATEST="false"
+            else
+              MOVE_LATEST="true"
+            fi
+          fi
+
+          # 手动指定了标签则覆盖推导结果
+          if [ -n "$CUSTOM_TAG" ]; then
+            REF_TAG="$CUSTOM_TAG"
           fi
 
           echo "full_image=$FULL_IMAGE"   >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA"     >> "$GITHUB_OUTPUT"
           echo "ref_tag=$REF_TAG"         >> "$GITHUB_OUTPUT"
           echo "move_latest=$MOVE_LATEST" >> "$GITHUB_OUTPUT"
+          echo "custom_tag=$CUSTOM_TAG"   >> "$GITHUB_OUTPUT"
 
           echo "镜像地址: $FULL_IMAGE"
           echo "标签: $REF_TAG / $SHORT_SHA$( [ "$MOVE_LATEST" = "true" ] && echo ' / latest' )"
@@ -188,7 +216,7 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
             VCS_REF=${{ github.sha }}
             BUILD_VERSION=${{ steps.meta.outputs.ref_tag }}
           # 用 GitHub Actions 缓存复用构建层，重复构建显著加速
@@ -210,7 +238,7 @@ jobs:
             echo "|---|---|"
             echo "| 镜像 | \`$FULL_IMAGE\` |"
             echo "| 固定标签 | \`$REF_TAG\`、\`$SHORT_SHA\` |"
-            echo "| latest | $([ "$MOVE_LATEST" = "true" ] && echo '已更新' || echo '未更新（非 main 分支）') |"
+            echo "| latest | $([ "$MOVE_LATEST" = "true" ] && echo '已更新' || echo '未更新（非 main 分支 / tag 构建）') |"
             echo "| 提交 | \`${{ github.sha }}\` |"
             echo ""
             echo "部署：\`docker compose pull api worker && docker compose up -d api worker\`"

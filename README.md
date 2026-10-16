@@ -30,6 +30,7 @@ registry.cn-shenzhen.aliyuncs.com/fanqx/study-helper-server
 | 推送到 `main` | ✅ | `latest`、`main`、`main-<短SHA>` |
 | 打标签（如 `v1.0.0`） | ✅ | `v1.0.0`、`v1.0.0-<短SHA>` |
 | 提 PR 到 `main` | ❌ 只跑质检 | — |
+| 手动触发（Actions → Run workflow） | 勾选 `push_image` 才构建 | 按分支名推导，可自定义 |
 
 `latest` 只跟随 `main` 移动 —— 给历史版本补打 tag 不会回退线上镜像。
 质检（verify）会检查后端 JS 语法、compose 结构、LF 行尾、小程序结构，任一项失败即中断构建。

@@ -78,11 +78,37 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  workflow_dispatch:            # 手动触发
+    inputs:
+      push_image:               # 勾选才构建推送，默认只跑质检
+        type: boolean
+        default: false
+      image_tag:                # 可选，覆盖按分支推导的标签
+        type: string
+        default: ''
 ```
 
 - 推送到 `main` → 跑质检 + 构建推送
 - 打 `v*` 形式的 tag（如 `v1.0.0`）→ 跑质检 + 构建推送
 - 提 PR 到 `main` → **只跑质检**，不构建不推送
+- 手动触发 → 默认**只跑质检**；勾选 `push_image` 才构建推送
+
+### 手动触发怎么用
+
+进仓库 **Actions** 页 → 左侧选 `Build & Push Image` → 右上 **Run workflow**：
+
+| 表单项 | 说明 |
+| --- | --- |
+| Use workflow from | 选要构建的分支 |
+| `push_image` | 勾上才会构建并推送镜像；不勾只做质检（适合验证流水线是否正常） |
+| `image_tag` | 可选。留空则按分支名推导；填了就用这个值做标签，例如 `hotfix-20261016` |
+
+典型用途：
+- **验证流水线**：不勾 `push_image` 跑一次，确认质检步骤全绿
+- **补构建**：代码没变但需要重新出镜像时，直接手动跑
+- **出临时镜像**：填 `image_tag` 打一个业务标签，不动 `latest`
+
+> 手动触发时 `latest` 只在选取 `main` 分支时才会移动；选其他分支只推分支名标签。
 
 ### 标签推导
 
@@ -90,6 +116,9 @@ on:
 | --- | --- | --- |
 | push 到 `main` | `latest`、`main`、`main-<短SHA>` | ✅ 移动 |
 | push tag `v1.0.0` | `v1.0.0`、`v1.0.0-<短SHA>` | ❌ 不动 |
+| 手动 · 选 `main` | `latest`、`main`、`main-<短SHA>` | ✅ 移动 |
+| 手动 · 选其他分支 | `<分支名>`、`<分支名>-<短SHA>` | ❌ 不动 |
+| 手动 · 填了 `image_tag` | `<自定义标签>`、`<自定义标签>-<短SHA>` | 仅选 `main` 时移动 |
 
 **为什么这样设计**：`latest` 只跟随 `main`。如果给历史版本补打 tag 也去覆盖 `latest`，线上镜像会被悄悄回退到旧代码 —— 这是很隐蔽的事故。短 SHA 标签则是为了精确回滚。
 
@@ -191,11 +220,16 @@ git commit -m "chore: 统一行尾"
 **Q：push 到 main 但没触发流水线**
 确认默认分支名。workflow 监听 `main`；若仓库默认分支是 `master`，要么把分支改名（`git branch -M main`），要么同步改 workflow 的 `branches`。
 
+**Q：手动触发了但没构建镜像**
+手动触发默认**只跑质检**。要构建得在 Run workflow 表单里勾选 `push_image`。这是有意设计的：手动跑最常见的原因是验证流水线本身，不该顺手推个镜像上去。
+
+**Q：Actions 页面找不到 Run workflow 按钮**
+`workflow_dispatch` 只在 workflow 文件**已存在于默认分支**后才生效。确认 `.github/workflows/docker-build.yml` 已经推到 `main`；刚加完需要等页面刷新，或强刷一次。
+
 ---
 
 ## 七、后续可增强
 
-- 加 `workflow_dispatch` 支持手动触发构建
 - 构建成功后自动 SSH 到服务器执行滚动更新
 - 接入漏洞扫描（Trivy）与镜像体积检查
 - 小程序端增加 CI 校验（如 `miniprogram-ci` 上传体验版）
