@@ -24,7 +24,7 @@ name: study-helper
 services:
   # ---------------- 数据库 ----------------
   mysql:
-    image: mysql:8.0
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/mysql:8.0.46
     container_name: sh-mysql
     restart: unless-stopped
     command:
@@ -58,7 +58,7 @@ services:
 
   # ---------------- 缓存 / 队列 ----------------
   redis:
-    image: redis:7-alpine
+    image: docker.1ms.run/library/redis:7-alpine
     container_name: sh-redis
     restart: unless-stopped
     command:
