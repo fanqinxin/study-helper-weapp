@@ -11,7 +11,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 const config = require('../config');
-const { uploadDir, publicPrefix } = require('./storage');
+const { uploadDir, publicPrefix } = require('../models/storage');
 
 // 确保目录存在
 fs.mkdirSync(uploadDir, { recursive: true });

@@ -78,6 +78,14 @@ jobs:
           [ "$fail" -eq 0 ] || exit 1
           echo "语法校验通过"
 
+      # node --check 只校验语法，不解析 require。
+      # 相对路径写错、依赖没写进 package.json 这类问题会一路绿灯到容器启动才崩，
+      # 所以这里单独做一次模块引用检查。
+      - name: 校验模块引用可解析
+        run: |
+          cd server
+          node scripts/check-requires.js
+
       - name: 校验 docker-compose.yml 结构
         run: |
           node -e "

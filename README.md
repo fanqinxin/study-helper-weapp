@@ -124,10 +124,13 @@ docker compose down -v                # 停止并删数据卷（慎用）
 cd server
 npm install
 cp .env.example .env      # 填写微信 appid/secret、MySQL、Redis、AI Key
+npm run check             # 模块引用自检（相对路径 + 依赖声明），启动前先跑这个
 npm run migrate           # 建表（可重复执行）
 npm run dev               # API 服务，默认 :3000
 npm run worker            # 批改任务队列消费者（另开终端）
 ```
+
+> `npm run check` 会扫描所有 `require`：相对路径写错、包没写进 `dependencies` 都会报出来。这类问题 `node --check` 查不到，只会在容器启动时炸。
 
 验证：`curl http://127.0.0.1:3000/api/v1/health`（返回 `status: ok` 表示 DB 与 Redis 均连通）
 

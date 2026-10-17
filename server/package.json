@@ -9,6 +9,7 @@
     "dev": "nodemon src/app.js",
     "worker": "node src/jobs/homeworkWorker.js",
     "migrate": "node src/models/migrate.js",
+    "check": "node scripts/check-requires.js",
     "docker:up": "docker compose up -d --build",
     "docker:migrate": "docker compose --profile tools run --rm migrate",
     "docker:logs": "docker compose logs -f api",
