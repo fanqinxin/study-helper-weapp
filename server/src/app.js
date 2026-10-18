@@ -21,6 +21,24 @@ const parentRoutes = require('./routes/parent');
 const app = express();
 
 app.disable('x-powered-by');
+
+/**
+ * 反向代理：Nginx 转发后靠 X-Forwarded-For 还原真实客户端 IP。
+ *
+ * 不设置的话 req.ip 永远等于代理地址（127.0.0.1），
+ * 而 login 限流正是以 req.ip 为键 —— 结果变成全站用户共用同一个额度。
+ *
+ * 默认只信任 1 跳（直接对端就是 Nginx）。业务端口仅绑定回环 / 内网，
+ * 外部无法绕过 Nginx 直连伪造 X-Forwarded-For。
+ * 若链路中间还有一层（如 CDN → Nginx → 应用），用 TRUST_PROXY 调大跳数。
+ */
+const trustProxy = (process.env.TRUST_PROXY || '').trim();
+if (trustProxy) {
+  app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+} else {
+  app.set('trust proxy', 1);
+}
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 

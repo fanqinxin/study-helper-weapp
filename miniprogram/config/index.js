@@ -11,9 +11,9 @@ const ENV = {
     baseUrl: 'http://127.0.0.1:3000/api/v1',
     debug: true,
   },
-  // 生产：替换为你的正式域名
+  // 生产：Nginx 反向代理到后端，证书与域名配置见 docs/部署-Nginx与HTTPS.md
   prod: {
-    baseUrl: 'https://your-domain.com/api/v1',
+    baseUrl: 'https://rstu.top/api/v1',
     debug: false,
   },
 };
