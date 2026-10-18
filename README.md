@@ -13,7 +13,7 @@ server/             Node.js + Express + MySQL + Redis 后端
 docker/initdb/      MySQL 容器首次初始化脚本
 docker-compose.yml  一键编排 api / worker / mysql / redis
 .github/workflows/  GitHub Actions：质检 + 构建推送镜像到阿里云
-deploy/nginx/       Nginx 站点配置（rstu.top · HTTPS 反向代理）
+deploy/nginx/       Nginx 站点配置（api.rstu.top · HTTPS 反向代理）
 docs/部署-Nginx与HTTPS.md  证书签发、微信域名配置、排障
 docs/CI-CD说明.md    CI 变量配置、标签规则、回滚操作
 docs/               开发交底文档
@@ -124,13 +124,15 @@ docker compose down -v                # 停止并删数据卷（慎用）
 
 后端只监听 `127.0.0.1:3000`，正式环境由 Nginx 终结 TLS 反向代理。
 
+接口走子域名 `api.rstu.top`，主域名 `rstu.top` 与 `www` 保持空闲（留给以后可能的官网 / H5，子域名继承主域备案，不用单独备案）。
+
 ```bash
-cp deploy/nginx/rstu.top.conf /etc/nginx/conf.d/rstu.top.conf
+cp deploy/nginx/api.rstu.top.conf /etc/nginx/conf.d/api.rstu.top.conf
 nginx -t && systemctl reload nginx
-curl -s https://rstu.top/api/v1/health
+curl -s https://api.rstu.top/api/v1/health
 ```
 
-小程序要求 HTTPS + 443 端口 + 已备案域名，且必须在微信后台配置 `request` / `uploadFile` / `downloadFile` 三个合法域名。证书签发顺序、微信侧配置、502/413/504 排障见 [`docs/部署-Nginx与HTTPS.md`](docs/部署-Nginx与HTTPS.md)。
+小程序要求 HTTPS + 443 端口 + 已备案域名，且必须在微信后台配置 `request` / `uploadFile` / `downloadFile` 三个合法域名。**微信的域名校验是精确匹配，主域名与子域名不互通** —— 三处都要填 `https://api.rstu.top`。证书签发顺序、微信侧配置、502/413/504 排障见 [`docs/部署-Nginx与HTTPS.md`](docs/部署-Nginx与HTTPS.md)。
 
 > 走 Nginx 后后端会自动信任 1 跳代理来还原真实 IP（`TRUST_PROXY` 可调）。不开这个，login 限流会把全站用户当成同一个 IP。
 

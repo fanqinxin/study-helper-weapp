@@ -13,7 +13,7 @@ const ENV = {
   },
   // 生产：Nginx 反向代理到后端，证书与域名配置见 docs/部署-Nginx与HTTPS.md
   prod: {
-    baseUrl: 'https://rstu.top/api/v1',
+    baseUrl: 'https://api.rstu.top/api/v1',
     debug: false,
   },
 };

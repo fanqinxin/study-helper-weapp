@@ -1,7 +1,11 @@
-# 部署 · Nginx 与 HTTPS（rstu.top）
+# 部署 · Nginx 与 HTTPS（api.rstu.top）
 
 后端已经在 Docker 里跑起来了（`127.0.0.1:3000`），这一步把它用 HTTPS 暴露给微信。
-配置文件：`deploy/nginx/rstu.top.conf`
+配置文件：`deploy/nginx/api.rstu.top.conf`
+
+> **为什么用子域名**：`api.rstu.top` 只承载接口，主域名 `rstu.top` 和 `www.rstu.top` 保持空闲，
+> 以后加官网、H5 活动页或管理后台都不冲突。**子域名继承主域名的 ICP 备案，不需要单独备案**，
+> 但前提是主域名 `rstu.top` 本身已经备案。
 
 ---
 
@@ -9,9 +13,15 @@
 
 | 检查项 | 怎么确认 | 不满足的后果 |
 | --- | --- | --- |
-| 域名解析 | `dig +short rstu.top` 返回本机公网 IP | Nginx 收到请求但证书/回调全乱 |
-| **ICP 备案** | 阿里云/腾讯云备案控制台查状态 | **微信不允许把未备案域名配成合法域名**，小程序直接调不通 |
+| 子域名解析 | `dig +short api.rstu.top` 返回本机公网 IP | Nginx 收到请求但证书/回调全乱 |
+| **ICP 备案** | 阿里云/腾讯云备案控制台查 `rstu.top` 的状态 | **微信不允许把未备案域名配成合法域名**，小程序直接调不通 |
 | 安全组放行 80 / 443 | 云厂商控制台入方向规则 | 证书签不下来、HTTPS 访问超时 |
+
+DNS 只需要加一条记录，**只加 `api` 这一条主机记录，不要动 `@` 和 `www`**：
+
+| 记录类型 | 主机记录 | 记录值 |
+| --- | --- | --- |
+| A | `api` | 服务器公网 IP |
 
 > `.top` 是工信部批复的顶级域，可以备案。但备案通常要 7–20 个工作日，是和开发并行的长周期事项——**没有备案，后面所有微信侧配置都做不了**，建议先确认这个。
 
@@ -49,21 +59,21 @@ apt install -y certbot        # 或 yum install -y certbot
 # 首次签发：standalone 模式会自己占用 80 端口，所以先停 nginx
 systemctl stop nginx
 certbot certonly --standalone \
-  -d rstu.top -d www.rstu.top \
+  -d api.rstu.top \
   --agree-tos -m 你的邮箱@example.com --no-eff-email
 
-# 证书落在这里
-ls /etc/letsencrypt/live/rstu.top/
+# 证书落在这里（目录名就是 api.rstu.top，和配置里的路径对应）
+ls /etc/letsencrypt/live/api.rstu.top/
 # fullchain.pem  privkey.pem  chain.pem
 ```
 
-> 如果 80 端口被占用/被封，改用 DNS-01 验证：
-> `certbot certonly --manual --preferred-challenges dns -d rstu.top`
-> 按提示去 DNS 加一条 TXT 记录即可。
+> **只签这一个域名**。不要顺手把 `rstu.top` / `www.rstu.top` 也加进 `-d`——
+> 没做解析的域名验证必然失败，certbot 会**整单失败**，连 `api` 的证书也拿不到。
+> 主域名现在不需要证书，等真要上线官网时再单独签。
 
-> **只签主域名的情形**：上面的命令同时签了 `www.rstu.top`。如果 `www` 没做解析，
-> certbot 会因为其中一条验证失败而**整单失败**。不需要 www 的话，
-> 把命令里的 `-d www.rstu.top` 和配置里所有 ` www.rstu.top` 一起删掉。
+> 如果 80 端口被占用/被封，改用 DNS-01 验证：
+> `certbot certonly --manual --preferred-challenges dns -d api.rstu.top`
+> 按提示去 DNS 加一条 TXT 记录即可。
 
 ### 之后续期
 
@@ -82,8 +92,8 @@ certbot 装完自带 timer，`systemctl list-timers | grep certbot` 能看到。
 ## 四、启用站点配置
 
 ```bash
-cp deploy/nginx/rstu.top.conf /etc/nginx/conf.d/rstu.top.conf
-mkdir -p /var/log/nginx
+cp deploy/nginx/api.rstu.top.conf /etc/nginx/conf.d/api.rstu.top.conf
+mkdir -p /var/log/nginx /var/www/certbot
 
 # 先校验，通过再重载
 nginx -t && systemctl reload nginx
@@ -97,19 +107,19 @@ nginx -t && systemctl reload nginx
 
 ```bash
 # 1. HTTP 是否正确跳转
-curl -I http://rstu.top/api/v1/health
-# 期望：301，Location: https://rstu.top/api/v1/health
+curl -I http://api.rstu.top/api/v1/health
+# 期望：301，Location: https://api.rstu.top/api/v1/health
 
 # 2. HTTPS 是否通，后端依赖是否正常
-curl -s https://rstu.top/api/v1/health | jq
+curl -s https://api.rstu.top/api/v1/health | jq
 # 期望：{"code":0,"msg":"ok","data":{"status":"ok","db":true,"redis":true,...}}
 
 # 3. 证书链是否完整（小程序对证书链要求严格）
-curl -vI https://rstu.top 2>&1 | grep -i "SSL certificate verify"
+curl -vI https://api.rstu.top 2>&1 | grep -i "SSL certificate verify"
 # 期望：SSL certificate verify ok
 
 # 4. 安全响应头是否生效
-curl -sI https://rstu.top/api/v1/health | grep -iE "strict-transport|nosniff|x-frame"
+curl -sI https://api.rstu.top/api/v1/health | grep -iE "strict-transport|nosniff|x-frame"
 ```
 
 第 3 步如果报 `unable to verify the first certificate`，说明服务器没发中间证书——
@@ -121,20 +131,23 @@ curl -sI https://rstu.top/api/v1/health | grep -iE "strict-transport|nosniff|x-f
 
 ### 1. 服务器域名
 
-微信公众平台 → 开发 → 开发管理 → 开发设置 → 服务器域名，三个都要填同一个域名：
+微信公众平台 → 开发 → 开发管理 → 开发设置 → 服务器域名，三个都填**子域名**：
 
 | 类型 | 填什么 |
 | --- | --- |
-| request 合法域名 | `https://rstu.top` |
-| uploadFile 合法域名 | `https://rstu.top` |
-| downloadFile 合法域名 | `https://rstu.top` |
+| request 合法域名 | `https://api.rstu.top` |
+| uploadFile 合法域名 | `https://api.rstu.top` |
+| downloadFile 合法域名 | `https://api.rstu.top` |
 
 限制：必须是 HTTPS、必须是 443 端口、不能带路径、不能用 IP、**必须已备案**。
 每月只能改 5 次，想清楚再提交。
 
+> 填 `https://api.rstu.top`，**不要填** `https://rstu.top` 或 `https://www.rstu.top`——
+> 微信的域名校验是精确匹配，主域名和子域名不互通。
+
 ### 2. 小程序代码
 
-`miniprogram/config/index.js` 里把环境切到 prod（`prod.baseUrl` 已配好 `https://rstu.top/api/v1`）：
+`miniprogram/config/index.js` 里把环境切到 prod（`prod.baseUrl` 已配好 `https://api.rstu.top/api/v1`）：
 
 ```js
 const CURRENT = 'prod';
@@ -163,10 +176,14 @@ AI 批改慢。当前 `proxy_read_timeout 180s`，对应后端 `AI_TIMEOUT_MS=60
 确认 API 容器挂了这个卷（`docker compose config | grep -A3 uploads`）。
 
 **HTTPS 能开但微信仍报「不在合法域名列表中」**
-按顺序排查：域名是否备案 → 是否 HTTPS → 是否 443 端口 → 是否在微信后台填过 → 是否刚改过域名（有 5–10 分钟生效延迟）。
+按顺序排查：域名是否备案 → 是否 HTTPS → 是否 443 端口 → 是否在微信后台填过 **api 子域** → 是否刚改过域名（有 5–10 分钟生效延迟）。
 
 **访问 https://IP 而不是域名**
 证书只对域名签发，用 IP 访问必然证书错误。这是预期行为。
+
+**主域名 rstu.top 打不开**
+预期行为。本配置只服务 `api.rstu.top`，主域和 `www` 没有解析也没有 server 块。
+以后要做官网时，另加一个 server 块和一张证书即可，不影响接口。
 
 ---
 
