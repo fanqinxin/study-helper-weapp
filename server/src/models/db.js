@@ -16,6 +16,16 @@ const pool = mysql.createPool({
   queueLimit: 0,
   charset: 'utf8mb4_unicode_ci',
   timezone: '+08:00',
+  /**
+   * DATE 列（cycle_start / plan_date）按字符串返回 'YYYY-MM-DD'
+   *
+   * 为什么必须这样：mysql2 默认把 DATE 解析成 JS Date，用的是连接 timezone(+08:00)，
+   * 而业务代码比较时用的是进程本地时区。两者只要不一致（比如容器没设 TZ、
+   * 或部署在 UTC 机器上），日期就会偏移一天 —— 结果就是每个请求都被判定为
+   * “跨周期”，免费额度反复重置（历史事故）。DATE 本身没有时间语义，
+   * 直接当字符串处理最稳，DATETIME 仍然按 timezone 解析成 Date。
+   */
+  dateStrings: ['DATE'],
   // DECIMAL/BIGINT 保持字符串，避免精度丢失
   decimalNumbers: false,
   supportBigNumbers: true,

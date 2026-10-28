@@ -123,6 +123,17 @@ const toDay = (d) => {
   const p = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
+/**
+ * 造一个「本地零点」的 Date，模拟 mysql2 解析 DATE 列的结果。
+ *
+ * 不能用 new Date('2026-10-26T00:00:00+08:00')：那个是绝对时间点，
+ * 在 UTC 的 CI runner 上换算成本地就变成前一天，用例会假失败。
+ * 这里必须和被测代码用同一个时区视角，用例才与运行环境无关。
+ */
+const localMidnight = (dayStr) => {
+  const [y, m, d] = dayStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
 const wrote = (re) => state.calls.some((s) => re.test(s));
 
 function reset() {
@@ -142,7 +153,7 @@ test('本周期内：不触发跨周期重置', async () => {
     uid: 1,
     free_used: 3,
     free_total: 500,
-    cycle_start: new Date(cycleDay + 'T00:00:00+08:00'), // mysql2 就是这么返回的
+    cycle_start: localMidnight(cycleDay), // 若 dateStrings 未生效，mysql2 就是这么返回的
     paid_balance: 2,
     monthly_until: null,
   };
@@ -206,6 +217,16 @@ test('cycle_start 为字符串时也能正确判断', async () => {
 
   await quota.getBalance(1);
   assert.ok(!wrote(/UPDATE quota_account SET free_used = 0/), '字符串形态同样不应误判跨周期');
+});
+
+/** 5. 兜底护栏：连接池必须让 DATE 走字符串，否则比较结果会随部署时区漂移 */
+test('连接池配置：DATE 列返回字符串', async () => {
+  const src = require('fs').readFileSync(require.resolve('../src/models/db'), 'utf8');
+  assert.ok(
+    /dateStrings\s*:\s*\[[^\]]*['"]DATE['"]/.test(src),
+    "src/models/db.js 必须保留 dateStrings: ['DATE']：否则 mysql2 会把 DATE 解析成 Date，" +
+      '与本地时区不一致时日期会偏移一天，免费额度会被反复重置'
+  );
 });
 
 /** ── 执行 ──────────────────────────────────────────────── */

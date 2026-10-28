@@ -95,10 +95,13 @@ jobs:
 
       # 额度服务是唯一有状态的“双入口”模块，用假 DB 跑一遍跨周期重置路径。
       # 历史上 conn 为 null 时裸调 conn.query 直接 500，静态检查看不出来。
+      # 再换 UTC 跑一遍：日期比较必须与部署时区无关（曾经因为本地时区与
+      # 连接 timezone 不一致，导致每个请求都误判跨周期）。
       - name: 额度服务自测
         run: |
           cd server
           node scripts/selftest-quota.js
+          TZ=UTC node scripts/selftest-quota.js
 
       - name: 校验 docker-compose.yml 结构
         run: |
