@@ -75,6 +75,10 @@ function check(file) {
     if (/function\s+[A-Za-z_$][\w$]*\s*\([^)]*\bconn\s*=\s*db\b/.test(line)) {
       problems.push(`${rel}:${i + 1}  函数默认参数写成 conn = db：db.query 与 conn.query 返回结构不同，需在函数内部抹平`);
     }
+    // DATE 列直接别名输出 → mysql2 会解析成 Date，JSON 化后变成 UTC 时间串（差 8 小时）
+    if (/\b(plan_date|cycle_start)\s+AS\s+/i.test(line) && !/DATE_FORMAT/.test(line)) {
+      problems.push(`${rel}:${i + 1}  DATE 列不要直接别名输出，mysql2 会转成 Date（JSON 化后偏移 8 小时），应写 DATE_FORMAT(col, '%Y-%m-%d')`);
+    }
   });
 }
 

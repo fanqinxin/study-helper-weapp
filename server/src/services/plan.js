@@ -25,8 +25,8 @@ function today() {
 async function getTodayPlan(uid) {
   const date = today();
   let tasks = await db.query(
-    `SELECT id, plan_date AS planDate, title, type, ref_id AS refId, status,
-            finished_at AS finishedAt
+    `SELECT id, DATE_FORMAT(plan_date, '%Y-%m-%d') AS planDate, title, type,
+            ref_id AS refId, status, finished_at AS finishedAt
        FROM plan_task WHERE uid = ? AND plan_date = ? ORDER BY id ASC`,
     [uid, date]
   );
@@ -157,7 +157,7 @@ async function toggleTask(uid, taskId, done = true) {
 /** 一周完成率：给"我的"页与家长报告用 */
 async function getWeekStats(uid) {
   const rows = await db.query(
-    `SELECT plan_date AS planDate,
+    `SELECT DATE_FORMAT(plan_date, '%Y-%m-%d') AS planDate,
             COUNT(*) AS total,
             SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS done
        FROM plan_task

@@ -64,6 +64,30 @@ function toDateStr(d) {
 }
 
 /**
+ * DATE/DATETIME 字段 → YYYY-MM-DD 字符串
+ *
+ * 注意：mysql2 默认把 DATE 列解析成 JS Date（受连接 timezone 影响），
+ * 直接拿 Date 和字符串比 `!==` 永远为 true —— 会导致每个请求都判定为
+ * “跨周期”，免费额度被反复重置。所有日期比较必须先过这个函数。
+ */
+function toDayStr(v) {
+  if (!v) return '';
+  if (v instanceof Date) return toDateStr(v);
+  return String(v).slice(0, 10);
+}
+
+/**
+ * 统一执行入口
+ *
+ * conn 存在 → 事务原生连接，返回 [rows, fields]
+ * conn 为空 → 连接池，返回 rows
+ * 只关心写入成功与否、不关心返回值时用它，避免 conn 为 null 时炸在 .query 上。
+ */
+function runOn(conn, sql, params) {
+  return conn ? conn.query(sql, params) : db.query(sql, params);
+}
+
+/**
  * 获取（或初始化）额度账户
  * 首次访问自动建账户；跨周期自动重置免费次数
  */
@@ -78,13 +102,13 @@ async function ensureAccount(uid, conn = null) {
     }
     return db.query(sql, params);
   };
-  const exec = (sql, params) => (conn ? conn.query(sql, params) : db.query(sql, params));
 
   let rows = await select('SELECT * FROM quota_account WHERE uid = ?', [uid]);
 
   if (!rows.length) {
     const cycleStart = toDateStr(currentCycleStart());
-    await exec(
+    await runOn(
+      conn,
       `INSERT INTO quota_account (uid, free_used, free_total, cycle_start, paid_balance)
        VALUES (?, 0, ?, ?, 0)
        ON DUPLICATE KEY UPDATE uid = uid`,
@@ -97,8 +121,9 @@ async function ensureAccount(uid, conn = null) {
   const expectCycle = toDateStr(currentCycleStart());
 
   // 跨周期：重置免费已用次数，并补一笔流水便于追溯
-  if (acc.cycle_start !== expectCycle) {
-    await conn.query(
+  if (toDayStr(acc.cycle_start) !== expectCycle) {
+    await runOn(
+      conn,
       `UPDATE quota_account
          SET free_used = 0, cycle_start = ?, free_total = ?
        WHERE uid = ?`,
@@ -121,9 +146,10 @@ async function ensureAccount(uid, conn = null) {
   return acc;
 }
 
-/** 写额度流水（内部使用，必须有 conn） */
+/** 写额度流水（conn 为空时走连接池，保证 getBalance 这类只读入口也能落流水） */
 async function writeLog(conn, { uid, change, source, refId, balanceAfter, remark }) {
-  await conn.query(
+  await runOn(
+    conn,
     `INSERT INTO quota_log (uid, \`change\`, source, ref_id, balance_after, remark)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [uid, change, source, refId || null, balanceAfter, remark || null]
