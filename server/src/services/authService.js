@@ -44,7 +44,7 @@ function genInviteCode() {
 async function login(code, role = 1) {
   const { openid, unionid } = await code2session(code);
 
-  const [rows] = await db.query(
+  const rows = await db.query(
     'SELECT * FROM user WHERE openid = ? AND status = 1 LIMIT 1',
     [openid]
   );
@@ -63,7 +63,7 @@ async function login(code, role = 1) {
        VALUES (?, ?, ?, ?)`,
       [openid, unionid, role, role === 2 ? '家长' : '小朋友']
     );
-    const [created] = await db.query('SELECT * FROM user WHERE id = ?', [res.insertId]);
+    const created = await db.query('SELECT * FROM user WHERE id = ?', [res.insertId]);
     user = created[0];
     logger.info({ uid: user.id, role }, '新用户注册');
   }
@@ -87,7 +87,7 @@ function publicUser(u) {
 }
 
 async function getProfile(uid) {
-  const [rows] = await db.query('SELECT * FROM user WHERE id = ? AND status = 1', [uid]);
+  const rows = await db.query('SELECT * FROM user WHERE id = ? AND status = 1', [uid]);
   if (!rows.length) {
     const e = new Error('用户不存在');
     e.code = 4040;
@@ -116,7 +116,7 @@ async function updateProfile(uid, { nickname, avatarUrl, grade, textbookId, less
  * 孩子生成邀请码，供家长扫码绑定
  */
 async function getInviteCode(uid) {
-  const [rows] = await db.query('SELECT * FROM user WHERE id = ?', [uid]);
+  const rows = await db.query('SELECT * FROM user WHERE id = ?', [uid]);
   if (!rows.length) {
     const e = new Error('用户不存在');
     e.code = 4040;
@@ -125,7 +125,7 @@ async function getInviteCode(uid) {
   const user = rows[0];
 
   if (user.family_id) {
-    const [f] = await db.query('SELECT invite_code FROM family WHERE id = ?', [user.family_id]);
+    const f = await db.query('SELECT invite_code FROM family WHERE id = ?', [user.family_id]);
     if (f.length) return { inviteCode: f[0].invite_code };
   }
 
@@ -140,7 +140,7 @@ async function getInviteCode(uid) {
  * 家长凭邀请码绑定
  */
 async function bindFamily(parentUid, inviteCode) {
-  const [f] = await db.query('SELECT * FROM family WHERE invite_code = ? LIMIT 1', [
+  const f = await db.query('SELECT * FROM family WHERE invite_code = ? LIMIT 1', [
     String(inviteCode).toUpperCase(),
   ]);
   if (!f.length) {
@@ -155,9 +155,9 @@ async function bindFamily(parentUid, inviteCode) {
 
 /** 查询家长绑定的孩子 */
 async function listChildren(parentUid) {
-  const [me] = await db.query('SELECT family_id FROM user WHERE id = ?', [parentUid]);
+  const me = await db.query('SELECT family_id FROM user WHERE id = ?', [parentUid]);
   if (!me.length || !me[0].family_id) return [];
-  const [kids] = await db.query(
+  const kids = await db.query(
     `SELECT id, nickname, avatar_url, grade FROM user
       WHERE family_id = ? AND role = 1 AND status = 1`,
     [me[0].family_id]

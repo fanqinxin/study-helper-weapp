@@ -51,7 +51,7 @@ async function submitAnalyze(uid, { subject, imageUrls, lessonId = null }) {
   const imageHash = hashImages(imageUrls);
 
   // ---- 1. 幂等检查：同一用户同一张作业不重复批改也不重复扣额度 ----
-  const [exist] = await db.query(
+  const exist = await db.query(
     'SELECT id, status FROM homework WHERE uid = ? AND image_hash = ? LIMIT 1',
     [uid, imageHash]
   );
@@ -110,7 +110,7 @@ async function submitAnalyze(uid, { subject, imageUrls, lessonId = null }) {
  * 失败时：标记失败 + 退还额度 + 记录错误信息
  */
 async function runAnalyze(homeworkId) {
-  const [rows] = await db.query('SELECT * FROM homework WHERE id = ?', [homeworkId]);
+  const rows = await db.query('SELECT * FROM homework WHERE id = ?', [homeworkId]);
   if (!rows.length) {
     logger.warn({ homeworkId }, '批改任务不存在');
     return;
@@ -123,7 +123,7 @@ async function runAnalyze(homeworkId) {
   // 取课文上下文，提升判题准确率
   let ctx = { subject: hw.subject };
   if (hw.lesson_id) {
-    const [ls] = await db.query(
+    const ls = await db.query(
       'SELECT title, knowledge_points FROM lesson WHERE id = ?',
       [hw.lesson_id]
     );
@@ -202,7 +202,7 @@ async function runAnalyze(homeworkId) {
 
 /** 查询批改状态（前端轮询） */
 async function getStatus(uid, homeworkId) {
-  const [rows] = await db.query(
+  const rows = await db.query(
     'SELECT id, status, error_msg FROM homework WHERE id = ? AND uid = ?',
     [homeworkId, uid]
   );
@@ -224,7 +224,7 @@ async function getStatus(uid, homeworkId) {
 
 /** 获取批改报告 */
 async function getReport(uid, homeworkId) {
-  const [rows] = await db.query(
+  const rows = await db.query(
     'SELECT * FROM homework WHERE id = ? AND uid = ?',
     [homeworkId, uid]
   );
@@ -235,7 +235,7 @@ async function getReport(uid, homeworkId) {
   }
   const hw = rows[0];
 
-  const [items] = await db.query(
+  const items = await db.query(
     `SELECT seq, stem, student_ans AS studentAns, correct_ans AS correctAns,
             is_correct AS isCorrect, analysis
        FROM homework_item WHERE homework_id = ? ORDER BY seq ASC`,

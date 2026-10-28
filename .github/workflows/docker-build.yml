@@ -86,6 +86,13 @@ jobs:
           cd server
           node scripts/check-requires.js
 
+      # db.query 返回行数组、conn.query 返回 [rows, fields]，混用会在运行时
+      # 才炸（登录接口曾因此报 reading 'length' of undefined），语法检查看不见。
+      - name: 校验数据库返回值用法
+        run: |
+          cd server
+          node scripts/check-query-usage.js
+
       - name: 校验 docker-compose.yml 结构
         run: |
           node -e "

@@ -59,7 +59,7 @@ async function getTodayPlan(uid) {
  * 生成今日计划（幂等：同一天重复调用不会重复插入）
  */
 async function generatePlan(uid, date = today()) {
-  const [user] = await db.query('SELECT * FROM user WHERE id = ?', [uid]);
+  const user = await db.query('SELECT * FROM user WHERE id = ?', [uid]);
   if (!user.length) return [];
 
   const u = user[0];
@@ -67,7 +67,7 @@ async function generatePlan(uid, date = today()) {
 
   // 1. 同步课文练习：按课堂进度取下一课
   if (u.textbook_id) {
-    const [next] = await db.query(
+    const next = await db.query(
       `SELECT id, seq, title FROM lesson
         WHERE textbook_id = ? AND seq > ? ORDER BY seq ASC LIMIT 1`,
       [u.textbook_id, u.lesson_progress || 0]
@@ -82,7 +82,7 @@ async function generatePlan(uid, date = today()) {
   }
 
   // 2. 错题巩固：优先未掌握且错得多的
-  const [pending] = await db.query(
+  const pending = await db.query(
     `SELECT COUNT(*) AS cnt FROM mistake WHERE uid = ? AND mastered = 0`,
     [uid]
   );
@@ -95,7 +95,7 @@ async function generatePlan(uid, date = today()) {
   }
 
   // 3. 作业批改：还没上传就提醒
-  const [hw] = await db.query(
+  const hw = await db.query(
     `SELECT COUNT(*) AS cnt FROM homework WHERE uid = ? AND DATE(created_at) = ?`,
     [uid, date]
   );
@@ -122,7 +122,8 @@ async function generatePlan(uid, date = today()) {
         inserted.push({ id: exist[0].id, plan_date: date, title: s.title, type: s.type, ref_id: s.refId, status: 0 });
         continue;
       }
-      const res = await conn.query(
+      // conn 是原生连接，返回 [result, fields]，INSERT 的结果取第一个
+      const [res] = await conn.query(
         `INSERT INTO plan_task (uid, plan_date, title, type, ref_id, status)
          VALUES (?, ?, ?, ?, ?, 0)`,
         [uid, date, s.title, s.type, s.refId]
@@ -136,7 +137,7 @@ async function generatePlan(uid, date = today()) {
 
 /** 勾选/取消任务 */
 async function toggleTask(uid, taskId, done = true) {
-  const [rows] = await db.query(
+  const rows = await db.query(
     'SELECT id FROM plan_task WHERE id = ? AND uid = ?',
     [taskId, uid]
   );

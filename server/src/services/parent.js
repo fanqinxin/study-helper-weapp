@@ -13,7 +13,7 @@ const planService = require('./plan');
  * 校验家长对该孩子有查看权（同 family_id 且孩子 role=1）
  */
 async function assertChildAccess(parentUid, childUid) {
-  const [rows] = await db.query(
+  const rows = await db.query(
     `SELECT p.family_id
        FROM user p
        JOIN user c ON c.id = ? AND c.family_id = p.family_id AND c.role = 1

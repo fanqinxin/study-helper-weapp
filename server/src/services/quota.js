@@ -67,18 +67,30 @@ function toDateStr(d) {
  * 获取（或初始化）额度账户
  * 首次访问自动建账户；跨周期自动重置免费次数
  */
-async function ensureAccount(uid, conn = db) {
-  let [rows] = await conn.query('SELECT * FROM quota_account WHERE uid = ?', [uid]);
+async function ensureAccount(uid, conn = null) {
+  // 本函数既被事务（原生 conn，返回 [rows, fields]）调用，
+  // 也被 getBalance（db，返回 rows）调用。两者返回结构不同，
+  // 差异在本函数内部抹平，避免上层写两套解构。
+  const select = async (sql, params) => {
+    if (conn) {
+      const [rows] = await conn.query(sql, params);
+      return rows;
+    }
+    return db.query(sql, params);
+  };
+  const exec = (sql, params) => (conn ? conn.query(sql, params) : db.query(sql, params));
+
+  let rows = await select('SELECT * FROM quota_account WHERE uid = ?', [uid]);
 
   if (!rows.length) {
     const cycleStart = toDateStr(currentCycleStart());
-    await conn.query(
+    await exec(
       `INSERT INTO quota_account (uid, free_used, free_total, cycle_start, paid_balance)
        VALUES (?, 0, ?, ?, 0)
        ON DUPLICATE KEY UPDATE uid = uid`,
       [uid, config.quota.freeTotal, cycleStart]
     );
-    [rows] = await conn.query('SELECT * FROM quota_account WHERE uid = ?', [uid]);
+    rows = await select('SELECT * FROM quota_account WHERE uid = ?', [uid]);
   }
 
   const acc = rows[0];
@@ -338,7 +350,7 @@ async function grant(uid, { orderNo, quota, monthlyDays = 0, remark = '购买加
 /** 额度流水查询 */
 async function getLogs(uid, { page = 1, size = 20 } = {}) {
   const offset = (page - 1) * size;
-  const [rows] = await db.query(
+  const rows = await db.query(
     `SELECT \`change\`, source, ref_id AS refId, balance_after AS balanceAfter,
             remark, created_at AS createdAt
        FROM quota_log WHERE uid = ?

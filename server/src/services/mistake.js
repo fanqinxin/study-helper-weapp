@@ -61,7 +61,9 @@ async function listMistake(uid, { page = 1, size = 20, subject, mastered } = {})
 
 /** 错题统计：给首页与错题本顶部用 */
 async function getStats(uid) {
-  const [row] = await db.query(
+  // 全项目约定：db.query 返回「行数组」，一律不解构；要单行就取 [0]。
+  // （conn.query 是原生驱动，返回 [rows, fields]，才需要解构 —— 两套写法不要混）
+  const stats = await db.query(
     `SELECT
         COUNT(*)                                        AS total,
         SUM(CASE WHEN mastered = 0 THEN 1 ELSE 0 END)   AS pending,
@@ -69,6 +71,7 @@ async function getStats(uid) {
        FROM mistake WHERE uid = ?`,
     [uid]
   );
+  const row = stats[0] || {};
 
   const bySubject = await db.query(
     `SELECT subject, COUNT(*) AS cnt FROM mistake
@@ -96,7 +99,7 @@ async function getStats(uid) {
 
 /** 单条错题详情 */
 async function getMistake(uid, id) {
-  const [rows] = await db.query(
+  const rows = await db.query(
     `SELECT m.id, m.subject, m.knowledge_point AS knowledgePoint,
             m.wrong_count AS wrongCount, m.mastered,
             hi.stem, hi.student_ans AS studentAns, hi.correct_ans AS correctAns, hi.analysis

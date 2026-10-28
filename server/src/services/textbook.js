@@ -40,7 +40,7 @@ async function listTextbook(uid, { subject, grade, volume } = {}) {
 
 /** 某本教材的课文列表 */
 async function listLesson(uid, textbookId) {
-  const [tb] = await db.query(
+  const tb = await db.query(
     'SELECT * FROM textbook WHERE id = ? AND (is_custom = 0 OR owner_uid = ?)',
     [textbookId, uid]
   );
@@ -79,7 +79,7 @@ async function listLesson(uid, textbookId) {
 
 /** 选择教材（同步写入用户表） */
 async function selectTextbook(uid, { textbookId, lessonProgress = 0 }) {
-  const [tb] = await db.query(
+  const tb = await db.query(
     'SELECT id, grade FROM textbook WHERE id = ? AND status = 1 AND (is_custom = 0 OR owner_uid = ?)',
     [textbookId, uid]
   );
@@ -144,7 +144,7 @@ async function createCustomTextbook(uid, { subject, grade, volume = 1, imageUrls
 
 /** 课文详情（含题目） */
 async function getLesson(uid, lessonId) {
-  const [rows] = await db.query(
+  const rows = await db.query(
     `SELECT l.*, t.name AS textbookName, t.subject, t.grade
        FROM lesson l JOIN textbook t ON t.id = l.textbook_id
       WHERE l.id = ? AND (t.is_custom = 0 OR t.owner_uid = ?)`,
