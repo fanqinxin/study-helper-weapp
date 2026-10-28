@@ -175,6 +175,34 @@ services:
     profiles:
       - tools
 
+  # ---------------- 教材种子数据（一次性，默认不随 up 启动）----------------
+  # 灌教材 / 课文 / 题库。重复执行是幂等的（按教材+seq 匹配更新）。
+  # 重建某套教材：docker compose --profile tools run --rm seed --reset
+  seed:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: ${IMAGE_TAG:-study-helper-server:latest}
+    container_name: sh-seed
+    command: ['node', 'scripts/seed.js']
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sh-net
+    restart: 'no'
+    profiles:
+      - tools
+
 volumes:
   mysql-data:
   redis-data:

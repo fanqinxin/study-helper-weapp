@@ -26,7 +26,8 @@ const prodDeps = new Set(Object.keys(pkg.dependencies || {}));
 const BUILTIN = new Set(require('module').builtinModules);
 
 const files = [];
-(function walk(d) {
+function walk(d) {
+  if (!fs.existsSync(d)) return;
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
     const p = path.join(d, e.name);
     if (e.isDirectory()) {
@@ -36,7 +37,10 @@ const files = [];
       files.push(p);
     }
   }
-})(SRC);
+}
+walk(SRC);
+// 运营脚本同样会在容器里执行（seed.js 等），引用写错一样会崩，一起纳入检查
+walk(path.join(ROOT, 'scripts'));
 
 const RE = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
 
@@ -59,8 +63,18 @@ const devOnly = [];
 let totalRel = 0;
 let totalBare = 0;
 
+/**
+ * 去掉注释再匹配
+ * 否则文档注释里的示例（如 require('./x')）会被当成真实引用误报
+ */
+function stripComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, '')        // /* ... */
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');      // // ...（排除 http:// 这类协议）
+}
+
 for (const f of files) {
-  const src = fs.readFileSync(f, 'utf8');
+  const src = stripComments(fs.readFileSync(f, 'utf8'));
   let m;
   RE.lastIndex = 0;
   while ((m = RE.exec(src))) {

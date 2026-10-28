@@ -70,7 +70,7 @@ jobs:
         run: |
           fail=0
           count=0
-          for f in $(find server/src -name '*.js'); do
+          for f in $(find server/src server/scripts -name '*.js'); do
             count=$((count + 1))
             node --check "$f" || { echo "语法错误: $f"; fail=1; }
           done

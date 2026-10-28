@@ -10,6 +10,8 @@ server/             Node.js + Express + MySQL + Redis 后端
   Dockerfile        后端镜像（api 与 worker 共用）
   docker-entrypoint.sh  启动时修正上传卷属主并降权运行
   .env.docker.example   Docker 部署环境变量模板
+  data/textbook/    教材种子数据（JSON，运营内容）
+  scripts/seed.js   教材/课文/题库灌库脚本（幂等）
 docker/initdb/      MySQL 容器首次初始化脚本
 docker-compose.yml  一键编排 api / worker / mysql / redis
 .github/workflows/  GitHub Actions：质检 + 构建推送镜像到阿里云
@@ -62,11 +64,17 @@ docker compose up -d --build
 # 3. 首次部署：建表（迁移是一次性任务，默认不随 up 启动）
 docker compose --profile tools run --rm migrate
 
-# 4. 查看状态与日志
+# 4. 首次部署：灌教材与题库（不灌则「课文」页是空的）
+docker compose --profile tools run --rm seed
+
+# 5. 查看状态与日志
 docker compose ps
 docker compose logs -f api
 curl http://127.0.0.1:3000/api/v1/health
 ```
+
+> 教材数据是运营内容，不进表结构迁移。维护方式见 [`docs/教材数据维护.md`](docs/教材数据维护.md)。
+> 改了 JSON 只需重跑 `seed`，脚本按「教材 + 课文 seq + 题干」更新，不会产生重复数据。
 
 **用 CI 构建好的镜像部署**（服务器上不构建，直接拉）：
 
@@ -99,6 +107,7 @@ docker compose down -v                # 停止并删数据卷（慎用）
 | `api` | HTTP 服务 | 仅监听 `127.0.0.1:3000`，生产由外层 Nginx 反代 |
 | `worker` | 批改队列消费者 | 与 api 同镜像，`command` 不同；与 api 共享上传目录 |
 | `migrate` | 建表任务 | `profiles: tools`，需显式 `--profile tools run` 触发 |
+| `seed` | 教材数据灌库 | `profiles: tools`；幂等，可反复执行 |
 
 镜像设计说明：
 
@@ -144,6 +153,8 @@ npm install
 cp .env.example .env      # 填写微信 appid/secret、MySQL、Redis、AI Key
 npm run check             # 模块引用自检（相对路径 + 依赖声明），启动前先跑这个
 npm run migrate           # 建表（可重复执行）
+npm run seed:check        # 只校验教材数据，不连库
+npm run seed              # 灌教材 / 课文 / 题库（幂等）
 npm run dev               # API 服务，默认 :3000
 npm run worker            # 批改任务队列消费者（另开终端）
 ```

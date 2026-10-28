@@ -9,9 +9,12 @@
     "dev": "nodemon src/app.js",
     "worker": "node src/jobs/homeworkWorker.js",
     "migrate": "node src/models/migrate.js",
+    "seed": "node scripts/seed.js",
+    "seed:check": "node scripts/seed.js --dry-run",
     "check": "node scripts/check-requires.js",
     "docker:up": "docker compose up -d --build",
     "docker:migrate": "docker compose --profile tools run --rm migrate",
+    "docker:seed": "docker compose --profile tools run --rm seed",
     "docker:logs": "docker compose logs -f api",
     "docker:down": "docker compose down"
   },

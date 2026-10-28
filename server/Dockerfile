@@ -62,6 +62,10 @@ COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node src ./src
 COPY --chown=node:node sql ./sql
+# 运营脚本与教材数据：seed.js 需要读 data/textbook 下的 JSON，
+# 这两项目录很小（纯文本），进镜像后可直接 compose exec 执行灌库
+COPY --chown=node:node scripts ./scripts
+COPY --chown=node:node data ./data
 
 # 入口脚本负责修正上传目录属主后降权执行
 COPY --chown=root:root docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
