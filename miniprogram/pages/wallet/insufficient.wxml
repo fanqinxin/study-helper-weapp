@@ -11,13 +11,13 @@
         免费额度将在 {{resetText}} 重新发放，每周赠送 {{balance.freeTotal}} 次
       </view>
       <view class="hero__desc" wx:else>
-        可以等下个周期，也可以先充一点继续用
+        可以等下个周期，也可以先用不消耗额度的方式继续学
       </view>
     </view>
 
     <!-- ============ 现在就想继续？============ -->
     <view class="section">
-      <view class="section__title">不花钱也能继续学</view>
+      <view class="section__title">不花额度也能继续学</view>
 
       <view class="ways">
         <view class="way" hover-class="way--active" bindtap="onGoLesson">
@@ -49,23 +49,13 @@
       </view>
     </view>
 
-    <!-- ============ 加油包 ============ -->
+    <!-- ============ 内测期说明（不售卖，仅提示联系管理员）============ -->
     <view class="section">
-      <view class="section__title">想继续让 AI 批改</view>
+      <view class="section__title">还想继续用 AI 批改</view>
 
-      <view class="packs" wx:if="{{packs.length}}">
-        <view wx:for="{{packs}}" wx:key="packId" class="pack {{item.recommended ? 'pack--rec' : ''}}">
-          <view class="pack__flag" wx:if="{{item.recommended}}">最划算</view>
-          <view class="pack__quota">{{item.quotaText}}</view>
-          <view class="pack__price"><text class="pack__symbol">¥</text>{{item.priceText}}</view>
-          <view class="pack__desc">{{item.desc}}</view>
-        </view>
+      <view class="beta-tip">
+        内测期间免费开放，不涉及任何付费。次数不够可以联系管理员为你增加。
       </view>
-
-      <view class="buy" hover-class="buy--active" bindtap="onBuy">
-        去充值
-      </view>
-      <view class="buy__hint">充值后立即到账，批改失败自动退还</view>
     </view>
 
     <!-- ============ 返回 ============ -->

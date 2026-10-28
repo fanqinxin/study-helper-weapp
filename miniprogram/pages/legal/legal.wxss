@@ -1,0 +1,138 @@
+/**
+ * 法律文本页共用样式（隐私政策 / 用户协议）
+ *
+ * 这类页面优先保证可读性：正文 28rpx、行高 1.75、段落间距充足，
+ * 不追求视觉花哨，但沿用同一套色板，不显得像外部页面。
+ */
+
+.legal {
+  padding: var(--space-md) var(--space-xl) 120rpx;
+  box-sizing: border-box;
+}
+
+.legal__header {
+  padding: var(--space-lg) 0 var(--space-xl);
+  border-bottom: 1rpx solid var(--divider);
+  margin-bottom: var(--space-lg);
+}
+
+.legal__title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 1rpx;
+}
+
+.legal__date {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+}
+
+/* ============ 章节 ============ */
+.legal__section {
+  margin-bottom: 48rpx;
+  padding-left: 0;
+}
+
+/* 儿童个人信息保护这类需要被看见的章节，用左侧色条提一下 */
+.legal__section--hl {
+  padding: var(--space-lg);
+  margin-left: calc(-1 * var(--space-lg));
+  margin-right: calc(-1 * var(--space-lg));
+  background: var(--brand-light);
+  border-radius: var(--radius-lg);
+  border-left: 6rpx solid var(--brand);
+}
+
+.legal__h {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20rpx;
+  line-height: 1.5;
+}
+
+.legal__intro {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-bottom: 16rpx;
+  line-height: 1.7;
+}
+
+.legal__p {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.75;
+  margin-bottom: 16rpx;
+  text-align: justify;
+}
+
+.legal__p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============ 分组 ============ */
+.legal__group {
+  margin: 24rpx 0;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+}
+
+.legal__section--hl .legal__group {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.legal__group-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 14rpx;
+}
+
+/* ============ 列表 ============ */
+.legal__li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12rpx;
+}
+
+.legal__dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--brand-deep);
+  margin-top: 16rpx;
+  margin-right: 14rpx;
+  flex-shrink: 0;
+}
+
+.legal__li-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.75;
+}
+
+/* ============ 提示 ============ */
+.legal__note {
+  margin-top: 16rpx;
+  padding: 18rpx 22rpx;
+  background: var(--bg-subtle);
+  border-left: 4rpx solid var(--sky);
+  border-radius: var(--radius-sm);
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.legal__footer {
+  margin-top: 60rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid var(--divider);
+  font-size: 24rpx;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.7;
+}

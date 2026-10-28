@@ -1,11 +1,14 @@
 /**
- * 额度中心
+ * 使用记录
  * 对应设计稿 20
  *
- * 产品原则：
- * 1. 先讲清"什么消耗、什么不消耗"，再谈充值，减少"是不是坑钱"的疑虑
- * 2. 免费额度占大头且能重置，付费只是加速，不制造焦虑
- * 3. 流水透明，每笔扣减都能查到
+ * 内测阶段调整（重要）：
+ *   1. 页面内不出现任何价格、套餐、购买按钮 —— 个人主体无法开通微信支付，
+ *      iOS 端只要出现「¥xx / 立即充值」就会被驳回，且内测期本就没有售卖行为
+ *   2. 保留余额与流水：让用户看得见「还剩多少、什么消耗额度」，这是信任的基础
+ *   3. 内测期免费额度给足，正常情况下不会走到不足提示
+ *
+ * 支付能力待主体升级为企业/个体工商户并接入「小程序虚拟支付」后再恢复。
  */
 const api = require('../../utils/api');
 const { QUOTA_SOURCE } = require('../../utils/constants');
@@ -22,10 +25,7 @@ Page({
     },
     /** 下次重置日期文案 */
     resetText: '',
-    packs: [],
     logs: [],
-    /** 档位选中 */
-    selectedPack: '',
     iconBolt: '',
   },
 
@@ -48,20 +48,10 @@ Page({
 
   async load() {
     try {
-      const [balance, packsRes, logsRes] = await Promise.all([
+      const [balance, logsRes] = await Promise.all([
         api.getQuotaBalance().catch(() => null),
-        api.getQuotaPacks().catch(() => ({ packs: [] })),
-        api.getQuotaLogs({ page: 1, size: 10 }).catch(() => []),
+        api.getQuotaLogs({ page: 1, size: 20 }).catch(() => []),
       ]);
-
-      const packs = (packsRes.packs || []).map((p) => ({
-        ...p,
-        priceText: (p.amountFen / 100).toFixed(0),
-        // 每月单价换算是家长最关心的对比维度
-        unitText: p.monthly
-          ? '按月不限次'
-          : `约 ¥${((p.amountFen / 100) / p.quota).toFixed(2)}/次`,
-      }));
 
       const logs = (Array.isArray(logsRes) ? logsRes : []).map((l) => ({
         ...l,
@@ -71,12 +61,7 @@ Page({
         changeText: Number(l.change) > 0 ? `+${l.change}` : String(l.change),
       }));
 
-      this.setData({
-        loading: false,
-        packs,
-        logs,
-        selectedPack: packs.find((p) => p.recommended)?.packId || '',
-      });
+      this.setData({ loading: false, logs });
 
       if (balance) {
         app.globalData.quota = balance;
@@ -101,27 +86,5 @@ Page({
     if (!str) return '';
     const s = String(str).replace('T', ' ').replace(/\.\d+Z?$/, '');
     return s.slice(5, 16);
-  },
-
-  onPackTap(e) {
-    this.setData({ selectedPack: e.currentTarget.dataset.id });
-  },
-
-  /** 下单（Phase 4 接入微信支付） */
-  async onBuy() {
-    const packId = this.data.selectedPack;
-    if (!packId) {
-      wx.showToast({ title: '先选一个档位', icon: 'none' });
-      return;
-    }
-    try {
-      const res = await api.createOrder(packId);
-      wx.showModal({
-        title: '支付功能开发中',
-        content: res.msg || '微信支付将在下个版本上线，敬请期待。',
-        showCancel: false,
-        confirmText: '知道了',
-      });
-    } catch (e) { /* 已提示 */ }
   },
 });

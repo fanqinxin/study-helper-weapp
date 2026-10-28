@@ -1,0 +1,37 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="用户协议" />
+
+  <view class="legal">
+    <view class="legal__header">
+      <view class="legal__title">用户协议</view>
+      <view class="legal__date">更新日期：{{updatedAt}}</view>
+    </view>
+
+    <view class="legal__section {{item.highlight ? 'legal__section--hl' : ''}}" wx:for="{{sections}}" wx:key="title">
+      <view class="legal__h">{{item.title}}</view>
+
+      <view class="legal__intro" wx:if="{{item.intro}}">{{item.intro}}</view>
+
+      <view class="legal__p" wx:for="{{item.paras}}" wx:for-item="p" wx:key="*this">{{p}}</view>
+
+      <view class="legal__group" wx:for="{{item.groups}}" wx:for-item="g" wx:key="label">
+        <view class="legal__group-label">{{g.label}}</view>
+        <view class="legal__li" wx:for="{{g.items}}" wx:for-item="it" wx:key="*this">
+          <view class="legal__dot"></view>
+          <view class="legal__li-text">{{it}}</view>
+        </view>
+      </view>
+
+      <view class="legal__li" wx:for="{{item.items}}" wx:for-item="it" wx:key="*this">
+        <view class="legal__dot"></view>
+        <view class="legal__li-text">{{it}}</view>
+      </view>
+
+      <view class="legal__note" wx:for="{{item.notes}}" wx:for-item="n" wx:key="*this">{{n}}</view>
+    </view>
+
+    <view class="legal__footer">
+      继续使用即表示你已理解并同意上述约定。
+    </view>
+  </view>
+</view>

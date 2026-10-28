@@ -19,7 +19,9 @@ const ENV = {
 };
 
 // 切换环境改这里
-const CURRENT = 'dev';
+// dev  → 本地 127.0.0.1，仅开发者工具可用（需勾选「不校验合法域名」）
+// prod → 线上 HTTPS 域名，真机 / 体验版 / 正式版必须用这个
+const CURRENT = 'prod';
 
 module.exports = {
   ...ENV[CURRENT],

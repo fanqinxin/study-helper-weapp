@@ -125,94 +125,14 @@
   flex-shrink: 0;
 }
 
-/* ---------- 加油包 ---------- */
-.packs {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.pack {
-  position: relative;
-  flex: 1;
-  padding: 32rpx 16rpx 26rpx;
-  border-radius: var(--radius-xl);
-  background: var(--bg-card);
-  border: 3rpx solid transparent;
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.pack--rec {
-  border-color: var(--brand);
-  background: var(--brand-light);
-}
-
-.pack__flag {
-  position: absolute;
-  top: -18rpx;
-  height: 36rpx;
-  padding: 0 18rpx;
-  border-radius: 18rpx;
-  background: var(--coral);
-  color: #FFFFFF;
-  font-size: 20rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-}
-
-.pack__quota {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.pack__price {
-  margin-top: 14rpx;
-  font-size: 50rpx;
-  font-weight: 700;
-  color: var(--brand-deep);
-  line-height: 1;
-}
-
-.pack__symbol {
-  font-size: 24rpx;
-  margin-right: 2rpx;
-}
-
-.pack__desc {
-  margin-top: 12rpx;
-  font-size: 20rpx;
-  color: var(--text-tertiary);
-  text-align: center;
-  line-height: 1.4;
-}
-
-.buy {
-  margin-top: var(--space-xl);
-  height: 104rpx;
-  border-radius: var(--radius-pill);
-  background: var(--brand);
-  color: var(--text-on-brand);
-  font-size: 34rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.buy--active {
-  opacity: 0.86;
-}
-
-.buy__hint {
-  margin-top: var(--space-sm);
-  font-size: var(--fs-tiny);
-  color: var(--text-quaternary);
-  text-align: center;
+/* ---------- 内测说明 ---------- */
+.beta-tip {
+  padding: 26rpx 30rpx;
+  border-radius: var(--radius-lg);
+  background: var(--grass-light);
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.7;
 }
 
 /* ---------- 返回 ---------- */

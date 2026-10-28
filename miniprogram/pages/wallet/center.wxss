@@ -1,5 +1,34 @@
 /* ============ 额度中心 —— 设计稿 20 ============ */
 
+/* ---------- 内测说明 ---------- */
+.beta {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx 24rpx;
+  margin-bottom: var(--space-md);
+  background: var(--grass-light);
+  border-radius: var(--radius-md);
+}
+
+.beta__tag {
+  flex-shrink: 0;
+  padding: 4rpx 14rpx;
+  margin-right: 16rpx;
+  border-radius: 999rpx;
+  background: var(--grass);
+  color: #FFFFFF;
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.beta__text {
+  flex: 1;
+  font-size: 25rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 /* ---------- 余额卡 ---------- */
 .balance {
   padding: 34rpx 30rpx 30rpx;

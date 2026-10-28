@@ -148,8 +148,8 @@ Page({
             icon: 'bolt',
             iconColor: '#E0A32E',
             iconBg: 'var(--brand-light)',
-            title: '额度中心',
-            desc: '查看剩余次数与充值',
+            title: '使用记录',
+            desc: '查看剩余次数与消耗明细',
             value: '',
             action: 'quota',
           },
@@ -161,6 +161,24 @@ Page({
             title: '关于我们',
             value: 'v1.0.0',
             action: 'about',
+          },
+          {
+            key: 'privacy',
+            icon: 'shield',
+            iconColor: '#7DD3A0',
+            iconBg: 'var(--grass-light)',
+            title: '隐私政策',
+            value: '',
+            action: 'privacy',
+          },
+          {
+            key: 'terms',
+            icon: 'book',
+            iconColor: '#6BB6E0',
+            iconBg: 'var(--sky-light)',
+            title: '用户协议',
+            value: '',
+            action: 'terms',
           },
         ],
       },
@@ -204,6 +222,12 @@ Page({
           showCancel: false,
           confirmText: '知道了',
         });
+        break;
+      case 'privacy':
+        wx.navigateTo({ url: '/pages/legal/privacy' });
+        break;
+      case 'terms':
+        wx.navigateTo({ url: '/pages/legal/terms' });
         break;
       default:
         break;

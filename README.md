@@ -16,7 +16,8 @@ docker/initdb/      MySQL 容器首次初始化脚本
 docker-compose.yml  一键编排 api / worker / mysql / redis
 .github/workflows/  GitHub Actions：质检 + 构建推送镜像到阿里云
 deploy/nginx/       Nginx 站点配置（sh-api.rstu.top · HTTPS 反向代理）
-docs/部署-Nginx与HTTPS.md  证书签发、微信域名配置、排障
+docs/上线指南.md     体验版发布、隐私保护指引配置、真机验收清单、主体升级路径
+docs/部署-Nginx与HTTPS.md  证书部署、微信域名配置、排障
 docs/CI-CD说明.md    CI 变量配置、标签规则、回滚操作
 docs/               开发交底文档
 ```

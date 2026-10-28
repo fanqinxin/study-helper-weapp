@@ -1,13 +1,19 @@
 <view class="page theme-{{theme}}">
-  <nav-bar mode="title" title="额度中心" />
+  <nav-bar mode="title" title="使用记录" />
 
   <view class="page__content">
+
+    <!-- 内测说明：明确「不收费」，避免用户误以为要付费 -->
+    <view class="beta">
+      <view class="beta__tag">内测</view>
+      <view class="beta__text">内测期间 AI 批改免费开放，不涉及任何付费。额度用完可联系管理员增加。</view>
+    </view>
 
     <!-- ============ 余额卡 ============ -->
     <view class="balance">
       <view class="balance__head">
         <view class="balance__label">AI 批改剩余次数</view>
-        <view class="balance__badge" wx:if="{{balance.monthly}}">月卡不限次</view>
+        <view class="balance__badge" wx:if="{{balance.monthly}}">不限次</view>
       </view>
 
       <view class="balance__num">
@@ -22,7 +28,7 @@
         </view>
         <view class="balance__cell">
           <view class="balance__cell-num">{{balance.paidBalance}}</view>
-          <view class="balance__cell-label">加油包余量</view>
+          <view class="balance__cell-label">赠送余量</view>
         </view>
         <view class="balance__cell">
           <view class="balance__cell-num">{{balance.freeTotal}}</view>
@@ -51,36 +57,6 @@
         <view class="rules__tag rules__tag--good">自动退</view>
         <view class="rules__text">批改失败会立刻退还，可在下方流水里核对</view>
       </view>
-    </view>
-
-    <!-- ============ 加油包 ============ -->
-    <view class="section">
-      <view class="section__title">想多用几次</view>
-
-      <view class="packs">
-        <view
-          wx:for="{{packs}}"
-          wx:key="packId"
-          class="pack {{selectedPack === item.packId ? 'pack--active' : ''}}"
-          hover-class="pack--hover"
-          data-id="{{item.packId}}"
-          bindtap="onPackTap"
-        >
-          <view class="pack__flag" wx:if="{{item.recommended}}">推荐</view>
-
-          <view class="pack__title">{{item.title}}</view>
-          <view class="pack__price">
-            <text class="pack__symbol">¥</text>{{item.priceText}}
-          </view>
-          <view class="pack__unit">{{item.unitText}}</view>
-          <view class="pack__desc">{{item.desc}}</view>
-        </view>
-      </view>
-
-      <view class="buy" hover-class="buy--active" bindtap="onBuy">
-        立即充值
-      </view>
-      <view class="buy__hint">微信支付 · 充值后立即到账</view>
     </view>
 
     <!-- ============ 流水 ============ -->

@@ -2,12 +2,14 @@
  * 额度不足拦截
  * 对应设计稿 21
  *
- * 这一页最重要的不是"卖额度"，而是"给出去路"。
- * 用户被拦住时最容易流失，所以必须同时给出：
+ * 这一页最重要的是"给出去路"，而不是"卖额度"。
+ * 用户被拦住时最容易流失，所以必须给出：
  *   1. 立刻能用（手动对答案，不消耗额度）
  *   2. 等一等（免费额度重置时间）
- *   3. 花钱解决（充加油包）
- * 三条路都摆出来，用户自己选，反感度最低。
+ *   3. 换脑子（小游戏）
+ *
+ * 内测阶段不提供购买入口：个人主体无法开通微信支付，
+ * 页面出现价格或购买按钮在 iOS 端必被驳回。次数不够统一走管理员手动增加。
  */
 const api = require('../../utils/api');
 const app = getApp();
@@ -24,7 +26,6 @@ Page({
     freeUsedUp: true,
     /** 额度不足的原因文案 */
     reason: '本周免费批改次数已经用完了',
-    packs: [],
     iconWarning: '',
   },
 
@@ -48,16 +49,7 @@ Page({
 
   async load() {
     try {
-      const [balance, packsRes] = await Promise.all([
-        api.getQuotaBalance().catch(() => null),
-        api.getQuotaPacks().catch(() => ({ packs: [] })),
-      ]);
-
-      const packs = (packsRes.packs || []).map((p) => ({
-        ...p,
-        priceText: (p.amountFen / 100).toFixed(0),
-        quotaText: p.monthly ? '按月不限次' : `${p.quota} 次`,
-      }));
+      const balance = await api.getQuotaBalance().catch(() => null);
 
       if (balance) {
         let resetText = '';
@@ -65,7 +57,7 @@ Page({
           const d = new Date(balance.nextResetAt);
           resetText = `${d.getMonth() + 1}月${d.getDate()}日`;
         }
-        // 免费还没用完却有余额，说明是月卡之外的付费余额不足
+        // 免费还没用完却有余额，说明是赠送余量以外的部分不足
         const freeUsedUp = balance.freeLeft <= 0;
         this.setData({
           balance,
@@ -73,19 +65,11 @@ Page({
           freeUsedUp,
           reason: freeUsedUp
             ? '本周免费批改次数已经用完了'
-            : '加油包次数已经用完了',
-          packs,
+            : '当前可用次数已经用完了',
         });
         app.globalData.quota = balance;
-      } else {
-        this.setData({ packs });
       }
     } catch (e) { /* 静默，页面用兜底文案渲染 */ }
-  },
-
-  /** 去充值 */
-  onBuy() {
-    wx.redirectTo({ url: '/pages/wallet/center' });
   },
 
   /** 不消耗额度的出路：手动对答案 */
