@@ -148,11 +148,14 @@ async function ensureAccount(uid, conn = null) {
 
 /** 写额度流水（conn 为空时走连接池，保证 getBalance 这类只读入口也能落流水） */
 async function writeLog(conn, { uid, change, source, refId, balanceAfter, remark }) {
+  // ref_id 列是 VARCHAR(64)。超长会让整个扣费事务回滚，且退款用同一个
+  // 超长号会再次失败 —— 在这里统一截断，调用方与本函数看到同一个值。
+  const ref = refId == null ? null : String(refId).slice(0, 64);
   await runOn(
     conn,
     `INSERT INTO quota_log (uid, \`change\`, source, ref_id, balance_after, remark)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [uid, change, source, refId || null, balanceAfter, remark || null]
+    [uid, change, source, ref, balanceAfter, remark || null]
   );
 }
 

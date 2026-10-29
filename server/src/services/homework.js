@@ -50,6 +50,15 @@ async function submitAnalyze(uid, { subject, imageUrls, lessonId = null }) {
 
   const imageHash = hashImages(imageUrls);
 
+  /**
+   * 额度流水号。quota_log.ref_id 是 VARCHAR(64)，'pending-' 占 8 位，
+   * 哈希只能带 56 位（224 bit，碰撞概率可忽略）。
+   * 曾经直接拼 64 位完整哈希 → 插入超长报错 → 扣费回滚 → 退款也用
+   * 同一个超长号再次失败，用户表现为"每次提交批改都失败"。
+   * 扣费 / 改写 / 退款必须共用同一个变量，不能各拼各的。
+   */
+  const consumeRefId = `pending-${imageHash.slice(0, 56)}`;
+
   // ---- 1. 幂等检查：同一用户同一张作业不重复批改也不重复扣额度 ----
   const exist = await db.query(
     'SELECT id, status FROM homework WHERE uid = ? AND image_hash = ? LIMIT 1',
@@ -70,7 +79,7 @@ async function submitAnalyze(uid, { subject, imageUrls, lessonId = null }) {
   let homeworkId = null;
   try {
     // ---- 2. 原子扣减额度（不足会抛 QuotaError 4010）----
-    const consumed = await quota.consume(uid, `pending-${imageHash}`, 'AI 批改消耗');
+    const consumed = await quota.consume(uid, consumeRefId, 'AI 批改消耗');
 
     // ---- 3. 创建批改记录 ----
     const res = await db.query(
@@ -84,7 +93,7 @@ async function submitAnalyze(uid, { subject, imageUrls, lessonId = null }) {
     // 把流水关联到真实的作业 ID，便于事后对账
     await db.query(
       'UPDATE quota_log SET ref_id = ? WHERE uid = ? AND ref_id = ? AND source = ?',
-      [`hw-${homeworkId}`, uid, `pending-${imageHash}`, quota.SOURCE.CONSUME]
+      [`hw-${homeworkId}`, uid, consumeRefId, quota.SOURCE.CONSUME]
     );
 
     await setTaskStatus(homeworkId, STATUS.PROCESSING);
@@ -94,7 +103,7 @@ async function submitAnalyze(uid, { subject, imageUrls, lessonId = null }) {
   } catch (e) {
     // 扣了额度但创建记录失败 → 必须退还，否则用户白扣
     if (homeworkId === null && e.code !== quota.ERR.INSUFFICIENT) {
-      await quota.refund(uid, `pending-${imageHash}`, '任务创建失败退还').catch((err) =>
+      await quota.refund(uid, consumeRefId, '任务创建失败退还').catch((err) =>
         logger.error({ err: err.message, uid }, '退款失败，需人工介入')
       );
     }

@@ -58,44 +58,83 @@ const state = {
   connUsed: false,
 };
 
+/**
+ * SQL 路由：连接池与事务连接共用。
+ * 同时承担列约束校验 —— 真库会因超长/类型不符报错，假库必须同样报错，
+ * 否则测试会放过线上必炸的写法（ref_id 超长就是教训）。
+ */
+async function route(sql, params) {
+  const s = sql.replace(/\s+/g, ' ').trim();
+  state.calls.push(s);
+
+  // 列约束：ref_id VARCHAR(64)。超长会炸掉整个扣费事务，这里必须同样炸。
+  if (/^(INSERT INTO quota_log|UPDATE quota_log SET ref_id)/.test(s)) {
+    const v = /^INSERT/.test(s) ? params[3] : params[0];
+    if (v != null && String(v).length > 64) {
+      throw new Error(`Data too long for column 'ref_id' at row 1`);
+    }
+  }
+
+  if (/^SELECT \* FROM quota_account WHERE uid/.test(s)) {
+    return state.row ? [state.row] : [];
+  }
+  if (/^INSERT INTO quota_account/.test(s)) {
+    state.row = {
+      uid: params[0],
+      free_used: 0,
+      free_total: params[1],
+      cycle_start: params[2],
+      paid_balance: 0,
+      monthly_until: null,
+    };
+    return { insertId: 1, affectedRows: 1 };
+  }
+  if (/^UPDATE quota_account SET free_used = 0/.test(s)) {
+    state.row.free_used = 0;
+    state.row.cycle_start = params[0];
+    state.row.free_total = params[1];
+    return { affectedRows: 1 };
+  }
+  if (/^UPDATE quota_account SET free_used = free_used \+ 1/.test(s)) {
+    state.row.free_used += 1;
+    return { affectedRows: 1 };
+  }
+  if (/^UPDATE quota_account SET paid_balance = paid_balance - 1/.test(s)) {
+    state.row.paid_balance -= 1;
+    return { affectedRows: 1 };
+  }
+  if (/^UPDATE quota_account SET paid_balance = paid_balance \+ 1/.test(s)) {
+    state.row.paid_balance += 1;
+    return { affectedRows: 1 };
+  }
+  if (/^INSERT INTO quota_log/.test(s)) {
+    return { insertId: 1, affectedRows: 1 };
+  }
+  throw new Error('假数据库未适配的 SQL：' + s);
+}
+
+/** 事务连接：mysql2 原生形态，query 返回 [rows, fields] */
+function makeConn() {
+  return {
+    async beginTransaction() {},
+    async commit() {},
+    async rollback() {},
+    release() {},
+    async query(sql, params) {
+      const rows = await route(sql, params);
+      return [rows, []];
+    },
+  };
+}
+
 const fakeDb = {
   pool: {},
   async query(sql, params) {
-    const s = sql.replace(/\s+/g, ' ').trim();
-    state.calls.push(s);
-
-    if (/^SELECT \* FROM quota_account WHERE uid/.test(s)) {
-      return state.row ? [state.row] : [];
-    }
-    if (/^INSERT INTO quota_account/.test(s)) {
-      state.row = {
-        uid: params[0],
-        free_used: 0,
-        free_total: params[1],
-        cycle_start: params[2],
-        paid_balance: 0,
-        monthly_until: null,
-      };
-      return { insertId: 1, affectedRows: 1 };
-    }
-    if (/^UPDATE quota_account SET free_used = 0/.test(s)) {
-      state.row.free_used = 0;
-      state.row.cycle_start = params[0];
-      state.row.free_total = params[1];
-      return { affectedRows: 1 };
-    }
-    if (/^UPDATE quota_account SET free_used = free_used \+ 1/.test(s)) {
-      state.row.free_used += 1;
-      return { affectedRows: 1 };
-    }
-    if (/^INSERT INTO quota_log/.test(s)) {
-      return { insertId: 1, affectedRows: 1 };
-    }
-    throw new Error('假数据库未适配的 SQL：' + s);
+    return route(sql, params);
   },
   async getConnection() {
     state.connUsed = true;
-    throw new Error('getBalance 是只读入口，不应该从连接池取连接');
+    return makeConn();
   },
   async transaction() {
     throw new Error('未使用');
@@ -227,6 +266,72 @@ test('连接池配置：DATE 列返回字符串', async () => {
     "src/models/db.js 必须保留 dateStrings: ['DATE']：否则 mysql2 会把 DATE 解析成 Date，" +
       '与本地时区不一致时日期会偏移一天，免费额度会被反复重置'
   );
+});
+
+/** 6. 扣费主路径：走事务、从免费额度扣 1 */
+test('扣费：免费额度 -1 并写流水', async () => {
+  reset();
+  state.row = {
+    uid: 1,
+    free_used: 0,
+    free_total: 20,
+    cycle_start: toDay(quota.currentCycleStart()),
+    paid_balance: 0,
+    monthly_until: null,
+  };
+
+  const r = await quota.consume(1, 'hw-1', 'AI 批改消耗');
+
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.from, 'free');
+  assert.strictEqual(state.row.free_used, 1, '免费额度应 +1');
+  assert.ok(wrote(/INSERT INTO quota_log/), '扣费必须落流水');
+  assert.ok(state.connUsed, '扣费必须走事务连接');
+});
+
+/**
+ * 7. 线上事故回归：ref_id 超长（'pending-' + 64 位哈希 = 72 字符）
+ * 曾经插入超长 → 扣费事务回滚 → 退款用同一个超长号再次失败
+ */
+test('扣费：ref_id 超长被截断而不是炸掉事务', async () => {
+  reset();
+  state.row = {
+    uid: 1,
+    free_used: 0,
+    free_total: 20,
+    cycle_start: toDay(quota.currentCycleStart()),
+    paid_balance: 0,
+    monthly_until: null,
+  };
+
+  const longRefId = `pending-${'a'.repeat(64)}`; // 72 字符，超过 VARCHAR(64)
+  assert.ok(longRefId.length > 64);
+
+  const r = await quota.consume(1, longRefId, 'AI 批改消耗');
+
+  assert.strictEqual(r.ok, true, '超长 ref_id 不应让扣费失败');
+  assert.strictEqual(state.row.free_used, 1, '扣费应正常生效');
+});
+
+/** 8. 额度不足：抛 QuotaError 4010，前端据此唤起拦截弹层 */
+test('额度不足：抛 4010 且不扣费', async () => {
+  reset();
+  state.row = {
+    uid: 1,
+    free_used: 20,
+    free_total: 20,
+    cycle_start: toDay(quota.currentCycleStart()),
+    paid_balance: 0,
+    monthly_until: null,
+  };
+
+  await assert.rejects(
+    () => quota.consume(1, 'hw-x', 'AI 批改消耗'),
+    (e) => e.code === quota.ERR.INSUFFICIENT,
+    '应抛 QuotaError(code=4010)'
+  );
+  assert.strictEqual(state.row.free_used, 20, '失败路径不应扣费');
+  assert.ok(!wrote(/INSERT INTO quota_log/), '不足时不应写扣费流水');
 });
 
 /** ── 执行 ──────────────────────────────────────────────── */
