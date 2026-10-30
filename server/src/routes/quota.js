@@ -41,8 +41,9 @@ router.get(
   '/quota/logs',
   auth,
   wrap(async (req, res) => {
-    const { page = 1, size = 20 } = req.query;
-    ok(res, await quota.getLogs(req.uid, { page: Number(page), size: Number(size) }));
+    const { page, size } = req.query;
+    // 分页清洗在 service 内做（toInt），路由层不要提前 Number()
+    ok(res, await quota.getLogs(req.uid, { page, size }));
   })
 );
 

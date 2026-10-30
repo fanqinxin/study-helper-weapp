@@ -11,6 +11,7 @@
 const db = require('../models/db');
 const config = require('../config');
 const logger = require('../utils/logger');
+const { toInt } = require('../utils/validate');
 
 /** 额度来源枚举 —— 与 quota_log.source 一致 */
 const SOURCE = {
@@ -377,14 +378,16 @@ async function grant(uid, { orderNo, quota, monthlyDays = 0, remark = '购买加
 }
 
 /** 额度流水查询 */
-async function getLogs(uid, { page = 1, size = 20 } = {}) {
-  const offset = (page - 1) * size;
+async function getLogs(uid, { page, size } = {}) {
+  const pageNo = toInt(page, { min: 1, max: 10000, fallback: 1 });
+  const sizeNo = toInt(size, { min: 1, max: 100, fallback: 20 });
+  const offset = (pageNo - 1) * sizeNo;
   const rows = await db.query(
     `SELECT \`change\`, source, ref_id AS refId, balance_after AS balanceAfter,
             remark, created_at AS createdAt
        FROM quota_log WHERE uid = ?
       ORDER BY id DESC LIMIT ? OFFSET ?`,
-    [uid, Number(size), Number(offset)]
+    [uid, sizeNo, offset]
   );
   return rows;
 }

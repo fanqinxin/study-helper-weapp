@@ -6,6 +6,7 @@
  */
 const db = require('../models/db');
 const logger = require('../utils/logger');
+const { toInt } = require('../utils/validate');
 
 /** 答对多少次算掌握 */
 const MASTER_STREAK = 2;
@@ -17,18 +18,21 @@ const MASTER_STREAK = 2;
  * @param {number} [opts.subject] 按学科筛选
  * @param {number} [opts.mastered] 0=未掌握 1=已掌握，不传=全部
  */
-async function listMistake(uid, { page = 1, size = 20, subject, mastered } = {}) {
+async function listMistake(uid, { page, size, subject, mastered } = {}) {
+  // query 参数可能是任意字符串（如 'undefined'），必须清洗后再进 SQL
+  const pageNo = toInt(page, { min: 1, max: 10000, fallback: 1 });
+  const sizeNo = toInt(size, { min: 1, max: 100, fallback: 20 });
+  const subjectNo = toInt(subject, { min: 1, max: 3 });
+  const masteredNo = toInt(mastered, { min: 0, max: 1 });
+
   const where = ['m.uid = ?'];
   const params = [uid];
 
-  if (subject) { where.push('m.subject = ?'); params.push(Number(subject)); }
-  if (mastered !== undefined && mastered !== '' && mastered !== null) {
-    where.push('m.mastered = ?');
-    params.push(Number(mastered));
-  }
+  if (subjectNo !== undefined) { where.push('m.subject = ?'); params.push(subjectNo); }
+  if (masteredNo !== undefined) { where.push('m.mastered = ?'); params.push(masteredNo); }
 
-  const offset = (Number(page) - 1) * Number(size);
-  params.push(Number(size), offset);
+  const offset = (pageNo - 1) * sizeNo;
+  params.push(sizeNo, offset);
 
   const rows = await db.query(
     `SELECT m.id, m.subject, m.knowledge_point AS knowledgePoint,

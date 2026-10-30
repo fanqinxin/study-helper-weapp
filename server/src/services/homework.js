@@ -18,6 +18,7 @@ const db = require('../models/db');
 const quota = require('./quota');
 const ai = require('../ai');
 const logger = require('../utils/logger');
+const { toInt } = require('../utils/validate');
 const { KEY, acquireLock, releaseLock, setTaskStatus } = require('../utils/redis');
 
 const STATUS = {
@@ -264,14 +265,16 @@ async function getReport(uid, homeworkId) {
 }
 
 /** 历史作业列表（带分页总数） */
-async function listHomework(uid, { page = 1, size = 20 } = {}) {
-  const offset = (page - 1) * size;
+async function listHomework(uid, { page, size } = {}) {
+  const pageNo = toInt(page, { min: 1, max: 10000, fallback: 1 });
+  const sizeNo = toInt(size, { min: 1, max: 100, fallback: 20 });
+  const offset = (pageNo - 1) * sizeNo;
   const [rows, totalRows] = await Promise.all([
     db.query(
       `SELECT id, subject, status, score, total, correct, created_at AS createdAt
          FROM homework WHERE uid = ?
         ORDER BY id DESC LIMIT ? OFFSET ?`,
-      [uid, Number(size), Number(offset)]
+      [uid, sizeNo, offset]
     ),
     db.query('SELECT COUNT(*) AS cnt FROM homework WHERE uid = ?', [uid]),
   ]);

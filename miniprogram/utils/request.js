@@ -28,6 +28,23 @@ function hideLoadingIfNeeded() {
 }
 
 /**
+ * GET query 参数清洗。
+ * wx.request 会把 undefined / NaN 序列化成字面字符串（subject=undefined），
+ * 服务端拿它 Number() 得 NaN 直接进 SQL。调用方用 `|| undefined` 省略参数的
+ * 写法没问题，但必须在这里真正剔除，不能指望 wx.request 帮你删。
+ */
+function cleanQuery(data) {
+  const out = {};
+  Object.keys(data || {}).forEach((k) => {
+    const v = data[k];
+    if (v === undefined || v === null) return;
+    if (typeof v === 'number' && Number.isNaN(v)) return;
+    out[k] = v;
+  });
+  return out;
+}
+
+/**
  * 核心请求
  * @param {object} options
  * @param {string} options.url 相对路径，如 /homework/analyze
@@ -50,6 +67,8 @@ function request(options) {
 
   if (loading) showLoadingIfNeeded();
 
+  const isGet = method.toUpperCase() === 'GET';
+
   return new Promise((resolve, reject) => {
     const token = getToken();
     if (auth && !token) {
@@ -61,7 +80,7 @@ function request(options) {
     wx.request({
       url: `${config.baseUrl}${url}`,
       method: method.toUpperCase(),
-      data,
+      data: isGet ? cleanQuery(data) : data,
       timeout: config.timeout,
       header: {
         'Content-Type': 'application/json',

@@ -9,6 +9,7 @@ const db = require('../models/db');
 const ai = require('../ai');
 const logger = require('../utils/logger');
 const config = require('../config');
+const { toInt } = require('../utils/validate');
 
 const STATUS = { RECOGNIZING: 0, READY: 1, FAILED: 2 };
 
@@ -17,9 +18,13 @@ async function listTextbook(uid, { subject, grade, volume } = {}) {
   const where = ['status = 1', '(is_custom = 0 OR owner_uid = ?)'];
   const params = [uid];
 
-  if (subject) { where.push('subject = ?'); params.push(Number(subject)); }
-  if (grade) { where.push('grade = ?'); params.push(Number(grade)); }
-  if (volume) { where.push('volume = ?'); params.push(Number(volume)); }
+  // query 参数可能是 'undefined' 这类脏字符串，清洗后再进 SQL
+  const subjectNo = toInt(subject, { min: 1, max: 3 });
+  const gradeNo = toInt(grade, { min: 1, max: 9 });
+  const volumeNo = toInt(volume, { min: 1, max: 4 });
+  if (subjectNo !== undefined) { where.push('subject = ?'); params.push(subjectNo); }
+  if (gradeNo !== undefined) { where.push('grade = ?'); params.push(gradeNo); }
+  if (volumeNo !== undefined) { where.push('volume = ?'); params.push(volumeNo); }
 
   const rows = await db.query(
     `SELECT id, name, subject, grade, volume, is_custom AS isCustom
