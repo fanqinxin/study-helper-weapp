@@ -41,7 +41,9 @@ const config = {
 
   ai: {
     provider: process.env.AI_PROVIDER || 'qwen',
-    visionModel: process.env.AI_VISION_MODEL || 'qwen-vl-max',
+    // 模型名必须与百炼当前「推荐模型」列表一致。
+    // 旧址：qwen-vl-max 已不在中国内地（北京）可用列表，调用会报 model not found
+    visionModel: process.env.AI_VISION_MODEL || 'qwen3.7-plus',
     textModel: process.env.AI_TEXT_MODEL || 'qwen-plus',
     apiKey: process.env.AI_API_KEY || '',
     baseUrl: process.env.AI_BASE_URL || '',
