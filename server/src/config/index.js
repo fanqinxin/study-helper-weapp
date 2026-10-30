@@ -78,6 +78,12 @@ const config = {
   upload: {
     /** 单张图片上限（MB） */
     maxSizeMb: num(process.env.UPLOAD_MAX_SIZE_MB, 3),
+    /**
+     * 站点对外根地址（不带尾部 /），如 https://sh-api.rstu.top
+     * 用途：库里存的是相对路径 /static/uploads/...，交给 AI 之前
+     * 必须补全成公网绝对 URL —— 百炼的服务器要从公网回源拉图。
+     */
+    publicBaseUrl: (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, ''),
   },
 
   log: {

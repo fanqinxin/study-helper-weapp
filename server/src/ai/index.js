@@ -27,6 +27,25 @@ const PROVIDERS = {
 /** 学科名称映射 */
 const SUBJECT_NAME = { 1: '语文', 2: '数学', 3: '英语' };
 
+/**
+ * 把库里的相对图片路径补全成公网绝对 URL。
+ *
+ * 背景：upload 接口返回 /static/uploads/...，小程序原样存库、原样传回。
+ * 视觉模型是百炼服务器**回源拉图**，只认公网绝对地址，
+ * 传相对路径会报 InvalidParameter: The provided URL does not appear to be valid。
+ * 数据库仍存相对路径（换域名/上 CDN 不用迁移数据），只在 AI 边界转换。
+ */
+function toAbsoluteUrls(imageUrls) {
+  const base = config.upload.publicBaseUrl;
+  return (Array.isArray(imageUrls) ? imageUrls : [imageUrls]).map((url) => {
+    if (/^(https?:\/\/|data:image\/)/.test(url)) return url;
+    if (!base) {
+      throw new Error('未配置 PUBLIC_BASE_URL，无法把相对图片路径交给 AI 识别');
+    }
+    return url.startsWith('/') ? `${base}${url}` : `${base}/${url}`;
+  });
+}
+
 /** 单例 provider */
 let providerInstance = null;
 
@@ -66,7 +85,7 @@ async function recognize(imageUrls, { subject, lessonTitle } = {}) {
   const provider = getProvider();
   const prompt = buildRecognizePrompt(subject, lessonTitle);
 
-  const raw = await provider.chatVision(imageUrls, prompt);
+  const raw = await provider.chatVision(toAbsoluteUrls(imageUrls), prompt);
   const parsed = BaseProvider.extractJson(raw);
 
   if (!Array.isArray(parsed) || !parsed.length) {
@@ -213,7 +232,7 @@ async function recognizeCatalog(imageUrls) {
   { "unit": "第一单元", "seq": 1, "title": "课文标题" }
 ]`;
 
-  const raw = await provider.chatVision(imageUrls, prompt);
+  const raw = await provider.chatVision(toAbsoluteUrls(imageUrls), prompt);
   const parsed = BaseProvider.extractJson(raw);
   if (!Array.isArray(parsed)) {
     throw new Error('目录识别失败，请重新拍摄');
@@ -233,5 +252,6 @@ module.exports = {
   judge,
   gradeHomework,
   recognizeCatalog,
+  toAbsoluteUrls,
   SUBJECT_NAME,
 };
