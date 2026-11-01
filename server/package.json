@@ -11,7 +11,7 @@
     "migrate": "node src/models/migrate.js",
     "seed": "node scripts/seed.js",
     "seed:check": "node scripts/seed.js --dry-run",
-    "check": "node scripts/check-requires.js && node scripts/check-query-usage.js && node scripts/selftest-quota.js",
+    "check": "node scripts/check-requires.js && node scripts/check-query-usage.js && node scripts/selftest-quota.js && node scripts/selftest-textbook.js",
     "docker:up": "docker compose up -d --build",
     "docker:migrate": "docker compose --profile tools run --rm migrate",
     "docker:seed": "docker compose --profile tools run --rm seed",
@@ -19,7 +19,8 @@
     "docker:down": "docker compose down",
     "check:requires": "node scripts/check-requires.js",
     "check:query": "node scripts/check-query-usage.js",
-    "check:quota": "node scripts/selftest-quota.js"
+    "check:quota": "node scripts/selftest-quota.js",
+    "check:textbook": "node scripts/selftest-textbook.js"
   },
   "dependencies": {
     "axios": "^1.7.7",

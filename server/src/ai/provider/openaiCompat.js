@@ -23,22 +23,38 @@ class OpenAICompatProvider extends BaseProvider {
     });
   }
 
-  /** 统一的请求执行 + 重试 */
-  async _post(payload, attempt = 1) {
+  /**
+   * 统一的请求执行 + 重试
+   *
+   * @param {object} payload 请求体
+   * @param {number} [attempt] 第几次尝试
+   * @param {object} [opts]
+   * @param {number} [opts.timeout] 本次请求超时（视觉识别比文本慢得多）
+   * @param {string} [opts.tag] 日志标记
+   */
+  async _post(payload, attempt = 1, opts = {}) {
+    const { timeout = this.cfg.timeoutMs, tag = 'AI' } = opts;
     try {
-      const { data } = await this.client.post('/chat/completions', payload);
+      const { data } = await this.client.post('/chat/completions', payload, { timeout });
       const content = data?.choices?.[0]?.message?.content;
       if (!content) {
         throw new Error('模型返回内容为空');
       }
       return content;
     } catch (e) {
+      const isTimeout = e.code === 'ECONNABORTED' || /timeout of \d+ms exceeded/.test(e.message || '');
       const msg = e.response?.data ? JSON.stringify(e.response.data).slice(0, 300) : e.message;
-      logger.warn({ attempt, msg }, 'AI 请求失败');
-      if (attempt < this.cfg.maxRetry + 1) {
+      logger.warn({ attempt, tag, timeout, msg }, 'AI 请求失败');
+
+      // 超时不重试：模型不会因为再等一次就变快，重试只会把等待时间乘以倍数
+      const canRetry = !isTimeout && attempt < this.cfg.maxRetry + 1;
+      if (canRetry) {
         // 指数退避，避免瞬间重试打爆下游
         await new Promise((r) => setTimeout(r, 800 * attempt));
-        return this._post(payload, attempt + 1);
+        return this._post(payload, attempt + 1, opts);
+      }
+      if (isTimeout) {
+        throw new Error(`${tag}超时（已等待 ${Math.round(timeout / 1000)} 秒），请稍后重试`);
       }
       throw new Error(`AI 请求最终失败: ${msg}`);
     }
@@ -50,11 +66,17 @@ class OpenAICompatProvider extends BaseProvider {
       { type: 'text', text: prompt },
       ...images.map((url) => ({ type: 'image_url', image_url: { url } })),
     ];
-    return this._post({
-      model: this.cfg.visionModel,
-      messages: [{ role: 'user', content }],
-      temperature: 0.2,
-    });
+    return this._post(
+      {
+        model: this.cfg.visionModel,
+        messages: [{ role: 'user', content }],
+        temperature: 0.2,
+        // 目录识别可能输出上百条课文，必须给足输出预算，否则会被截断
+        max_tokens: this.cfg.visionMaxTokens,
+      },
+      1,
+      { timeout: this.cfg.visionTimeoutMs, tag: 'AI 视觉识别' }
+    );
   }
 
   async chatText(prompt, opts = {}) {

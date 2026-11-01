@@ -20,6 +20,8 @@ module.exports = {
   listLesson: (textbookId) => http.get(`/textbook/${textbookId}/lessons`),
   selectTextbook: (data) => http.post('/textbook/select', data),
   uploadCustomTextbook: (data) => http.post('/textbook/custom', data, { loading: true }),
+  /** 自定义教材识别进度（上传后轮询） */
+  getTextbookStatus: (textbookId) => http.get(`/textbook/${textbookId}/status`),
   /** 课文详情（含练习题，不含答案） */
   getLesson: (lessonId) => http.get(`/lesson/${lessonId}`),
   /** 提交练习答案并判分 */

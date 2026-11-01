@@ -55,6 +55,16 @@ router.post(
   })
 );
 
+/**
+ * 自定义教材识别进度（前端轮询）
+ * 识别是异步任务：上传接口立即返回，这里查状态
+ */
+router.get(
+  '/textbook/:id/status',
+  auth,
+  wrap(async (req, res) => ok(res, await textbookService.getCustomStatus(req.uid, req.params.id)))
+);
+
 /** 某本教材的课文列表（放在 /textbook/:id/lessons） */
 router.get(
   '/textbook/:id/lessons',

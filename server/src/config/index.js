@@ -48,7 +48,15 @@ const config = {
     apiKey: process.env.AI_API_KEY || '',
     baseUrl: process.env.AI_BASE_URL || '',
     maxRetry: num(process.env.AI_MAX_RETRY, 2),
+    /** 文本调用超时 */
     timeoutMs: num(process.env.AI_TIMEOUT_MS, 60000),
+    /**
+     * 视觉识别超时。目录识别可能要输出上百条课文，60 秒经常不够；
+     * 超时不重试（见 provider），所以这里给足时间。
+     */
+    visionTimeoutMs: num(process.env.AI_VISION_TIMEOUT_MS, 120000),
+    /** 视觉输出上限，目录页课文多时需要放宽 */
+    visionMaxTokens: num(process.env.AI_VISION_MAX_TOKENS, 4000),
   },
 
   quota: {

@@ -144,9 +144,7 @@ Page({
     try {
       const imageUrls = await uploadImages(this.data.images.map((i) => i.path));
 
-      wx.hideLoading();
-      wx.showLoading({ title: 'AI 识别目录中', mask: true });
-
+      // 接口只负责建记录 + 投递任务，立刻返回；识别在后台 worker 里跑
       const res = await api.uploadCustomTextbook({
         subject: this.data.subject,
         grade: this.data.grade,
@@ -155,22 +153,82 @@ Page({
         name: '我的教材',
       });
 
-      wx.hideLoading();
       app.refreshQuota();
+      wx.showLoading({ title: 'AI 识别目录中', mask: true });
 
-      wx.showModal({
-        title: '识别完成',
-        content: `已整理出 ${res.lessonCount} 篇课文，去教材中心选它开始练习吧。`,
-        showCancel: false,
-        confirmText: '去看看',
-        success: () => {
-          wx.redirectTo({ url: '/pages/textbook/center' });
-        },
-      });
+      const st = await this.waitRecognize(res.textbookId);
+      wx.hideLoading();
+      this.setData({ submitting: false });
+
+      if (st.status === 1) {
+        wx.showModal({
+          title: '识别完成',
+          content: `已整理出 ${st.lessonCount} 篇课文，去教材中心选它开始练习吧。`,
+          showCancel: false,
+          confirmText: '去看看',
+          success: () => {
+            wx.redirectTo({ url: '/pages/textbook/center' });
+          },
+        });
+      } else if (st.status === 2) {
+        wx.showModal({
+          title: '识别失败',
+          content: '没能从照片里认出目录，可能是画面模糊或目录页不全。消耗的额度已自动退还，换个光线好点的地方重拍试试。',
+          showCancel: false,
+          confirmText: '重新拍',
+        });
+      } else {
+        // 超过本地等待时间但后端仍在跑：不判失败，也不跳教材中心
+        // （识别中的教材不会出现在列表里，跳过去只会看到空的）
+        wx.showModal({
+          title: '还在整理',
+          content: '目录比较多，整理时间较长。过几分钟回到教材中心就能看到，识别失败会自动退还额度。',
+          showCancel: false,
+          confirmText: '知道了',
+        });
+      }
     } catch (e) {
       wx.hideLoading();
       this.setData({ submitting: false });
       if (e && e.silent) return;
     }
+  },
+
+  /**
+   * 轮询识别进度
+   *
+   * 识别耗时 60-120 秒，远超 wx.request 的 30 秒超时，
+   * 所以拆成"提交任务 + 轮询状态"，客户端每个请求都很短。
+   * 本地最多等 90 秒，超时不报失败（后端有 10 分钟兜底），
+   * 用户可稍后去教材中心看结果。
+   *
+   * @returns {Promise<{status:number, lessonCount:number}>} status 0=识别中 1=可用 2=失败
+   */
+  waitRecognize(textbookId) {
+    const INTERVAL = 3000;
+    const MAX_TRIES = 30;
+
+    return new Promise((resolve) => {
+      let tries = 0;
+
+      const tick = async () => {
+        tries += 1;
+        let st = null;
+        try {
+          st = await api.getTextbookStatus(textbookId);
+        } catch (e) {
+          // 网络抖动不终止，继续轮询
+        }
+
+        if (st && st.status !== 0) return resolve(st);
+        if (tries >= MAX_TRIES) return resolve(st || { status: 0, lessonCount: 0 });
+
+        wx.showLoading({ title: `AI 识别目录中 ${tries * 3}s`, mask: true });
+        setTimeout(tick, INTERVAL);
+        return undefined;
+      };
+
+      tick();
+    });
   },
 });

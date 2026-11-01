@@ -103,6 +103,13 @@ jobs:
           node scripts/selftest-quota.js
           TZ=UTC node scripts/selftest-quota.js
 
+      # 教材识别是异步任务：扣额度在事务外、worker 幂等、失败退款、超时兜底，
+      # 这些路径静态检查全看不见，用假 DB / 假 Redis / 假 AI 跑一遍。
+      - name: 教材识别自测
+        run: |
+          cd server
+          node scripts/selftest-textbook.js
+
       - name: 校验 docker-compose.yml 结构
         run: |
           node -e "

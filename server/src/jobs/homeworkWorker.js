@@ -11,10 +11,12 @@
  */
 const db = require('../models/db');
 const homeworkService = require('../services/homework');
+const textbookService = require('../services/textbook');
 const { redis } = require('../utils/redis');
 const logger = require('../utils/logger');
 
 const QUEUE_KEY = 'queue:homework:analyze';
+const QUEUE_TEXTBOOK = textbookService.TEXTBOOK_QUEUE;
 const BLOCK_SECONDS = 5;
 
 let running = true;
@@ -22,21 +24,37 @@ let running = true;
 /**
  * 生产建议换成 bullmq；这里用最朴素的 LPUSH/BRPOP 队列，
  * 好处是零额外依赖，逻辑一目了然，方便早期调试。
+ *
+ * 同一个 worker 消费两类任务：批改、教材目录识别。
+ * 二者都是"长耗时 AI 调用"，共用一套消费循环，避免再起一个容器。
  */
 async function consumeOnce() {
   // BRPOP 阻塞等待，超时返回 null，避免空转
-  const res = await redis.brpop(QUEUE_KEY, BLOCK_SECONDS);
+  const res = await redis.brpop(QUEUE_KEY, QUEUE_TEXTBOOK, BLOCK_SECONDS);
   if (!res) return false;
 
-  const [, payload] = res;
-  let homeworkId;
+  const [key, payload] = res;
+  let msg;
   try {
-    homeworkId = Number(JSON.parse(payload).homeworkId);
+    msg = JSON.parse(payload);
   } catch (e) {
-    logger.error({ payload }, '队列消息解析失败，已丢弃');
+    logger.error({ key, payload }, '队列消息解析失败，已丢弃');
     return true;
   }
 
+  if (key === QUEUE_TEXTBOOK) {
+    const textbookId = Number(msg.textbookId);
+    if (!textbookId) return true;
+    try {
+      await textbookService.runRecognize(textbookId, msg.imageUrls);
+    } catch (e) {
+      // runRecognize 内部已处理失败与退款，这里只兜底记录
+      logger.error({ err: e.message, textbookId }, 'worker 处理教材识别异常');
+    }
+    return true;
+  }
+
+  const homeworkId = Number(msg.homeworkId);
   if (!homeworkId) return true;
 
   try {
@@ -49,7 +67,7 @@ async function consumeOnce() {
 }
 
 async function main() {
-  logger.info(`批改 Worker 已启动，监听队列 ${QUEUE_KEY}`);
+  logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK] }, '任务 Worker 已启动');
 
   try {
     await db.ping();
