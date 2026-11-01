@@ -1,5 +1,5 @@
 <view class="page page--parent theme-{{theme}}">
-  <nav-bar mode="title" title="家长中心" showBack="{{false}}" />
+  <nav-bar mode="title" title="家长中心" show-back="{{false}}" />
 
   <view class="page__content">
 

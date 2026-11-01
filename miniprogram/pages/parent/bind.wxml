@@ -1,5 +1,5 @@
 <view class="page theme-{{theme}}">
-  <nav-bar mode="title" title="绑定孩子" showBack="{{false}}" />
+  <nav-bar mode="title" title="绑定孩子" />
 
   <view class="page__content">
 

@@ -1,5 +1,5 @@
 <view class="page theme-{{theme}}">
-  <nav-bar mode="title" title="AI 批改" showBack="{{false}}" />
+  <nav-bar mode="title" title="AI 批改" />
 
   <view class="wrap">
 

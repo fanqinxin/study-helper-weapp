@@ -1,13 +1,20 @@
 <view class="nav {{bordered ? 'nav--bordered' : ''}}"
       style="background: {{background}};">
-  <!-- 状态栏占位 -->
-  <view class="nav__status" style="height: {{statusBarHeight}}px;">
-    <view class="nav__time">{{timeText}}</view>
-  </view>
+  <!-- 状态栏占位：只留高度，不画任何内容。
+       系统状态栏本身已经显示时间/信号/电量，这里再画一遍必然重叠。 -->
+  <view class="nav__status" style="height: {{statusBarHeight}}px;"></view>
 
   <!-- 标题栏 -->
   <view wx:if="{{mode === 'title'}}" class="nav__bar" style="height: {{navBarHeight}}px;">
-    <view wx:if="{{showBack}}" class="nav__back" hover-class="nav__back--active" bindtap="onBack">
+    <view
+      wx:if="{{showBack}}"
+      class="nav__back"
+      hover-class="nav__back--active"
+      hover-stay-time="80"
+      bindtap="onBack"
+      aria-role="button"
+      aria-label="{{canGoBack ? '返回上一页' : '回到首页'}}"
+    >
       <view class="nav__arrow"></view>
     </view>
     <view class="nav__title">{{title}}</view>

@@ -3,6 +3,9 @@
  * 支持两种形态：
  *   plain  仅状态栏占位（首页等，设计稿 01/02/06-09）
  *   title  返回 + 标题（设计稿 03/04/05/10-16）
+ *
+ * 注意：本组件只负责「状态栏高度的占位」，绝不绘制时间/信号。
+ * navigationStyle: custom 不会隐藏系统状态栏，再画一遍屏幕顶部必然和系统时间打架。
  */
 const { getSystemInfo } = require('../../utils/system');
 
@@ -13,7 +16,7 @@ Component({
     /** plain | title */
     mode: { type: String, value: 'plain' },
     title: { type: String, value: '' },
-    /** 是否显示返回箭头 */
+    /** 是否显示返回按钮；只有「栈底页」才需要关掉 */
     showBack: { type: Boolean, value: true },
     /** 背景色，传 transparent 则透明 */
     background: { type: String, value: 'transparent' },
@@ -24,7 +27,8 @@ Component({
   data: {
     statusBarHeight: 20,
     navBarHeight: 44,
-    timeText: '9:41',
+    /** 是否还有上一页；没有时返回键退化为「回首页」 */
+    canGoBack: true,
   },
 
   lifetimes: {
@@ -33,31 +37,23 @@ Component({
       this.setData({
         statusBarHeight: info.statusBarHeight,
         navBarHeight: info.navBarHeight,
-        timeText: this.formatTime(),
+        canGoBack: getCurrentPages().length > 1,
       });
-      // 每分钟更新一次时间，保持与真实状态栏一致
-      this._timer = setInterval(() => {
-        this.setData({ timeText: this.formatTime() });
-      }, 60000);
-    },
-    detached() {
-      if (this._timer) clearInterval(this._timer);
     },
   },
 
   methods: {
-    formatTime() {
-      const d = new Date();
-      return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-    },
-
     onBack() {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        wx.navigateBack();
-      } else {
-        wx.switchTab({ url: '/pages/home/home' });
+      if (getCurrentPages().length > 1) {
+        // 少数情况下（栈被 reLaunch 重置）navigateBack 会失败，兜底回首页
+        wx.navigateBack({
+          delta: 1,
+          fail: () => wx.switchTab({ url: '/pages/home/home' }),
+        });
+        return;
       }
+      // 栈底页：直接回首页，不能让用户卡在二级页里
+      wx.switchTab({ url: '/pages/home/home' });
     },
   },
 });
