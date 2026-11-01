@@ -39,6 +39,16 @@ Page({
     generating: false,
     /** 出题已等待秒数 */
     genSeconds: 0,
+    /** 可选题量档位（与服务端 ALLOWED_COUNTS 一致） */
+    countOptions: [5, 10, 15, 20],
+    /** 本次要出的题量 */
+    practiceCount: 5,
+    /**
+     * 当前题是否已作答 —— 底部按钮亮/暗的状态源。
+     * 不能直接在 WXML 里写 canGoNext()：WXML 表达式不支持调用页面方法，
+     * 结果恒为假，按钮会一直是浅色。
+     */
+    canNext: false,
   },
 
   onLoad(options) {
@@ -69,6 +79,7 @@ Page({
         question: total ? lesson.questions[0] : null,
         answers: {},
         inputValue: '',
+        canNext: false,
         progressPercent: total ? Math.round((1 / total) * 100) : 0,
       });
     } catch (e) {
@@ -78,6 +89,14 @@ Page({
 
   onUnload() {
     this.stopGenerate();
+  },
+
+  /** 选题量：5 / 10 / 15 / 20 */
+  onPickCount(e) {
+    if (this.data.generating) return;
+    const n = Number(e.currentTarget.dataset.count) || 5;
+    if (n === this.data.practiceCount) return;
+    this.setData({ practiceCount: n });
   },
 
   /**
@@ -96,7 +115,7 @@ Page({
     }, 1000);
 
     try {
-      const res = await api.generatePractice(this.data.lessonId);
+      const res = await api.generatePractice(this.data.lessonId, this.data.practiceCount);
       if (res && res.status === 'ready') {
         this.finishGenerate(true);
         return;
@@ -168,12 +187,13 @@ Page({
     if (!q) return;
 
     const answers = { ...this.data.answers, [q.id]: value };
-    this.setData({ answers });
+    this.setData({ answers, canNext: true });
   },
 
   /** 填空/计算题输入 */
   onInput(e) {
-    this.setData({ inputValue: e.detail.value });
+    const v = e.detail.value;
+    this.setData({ inputValue: v, canNext: String(v || '').trim() !== '' });
   },
 
   /** 确认当前题（填空类需要显式确认） */
@@ -189,12 +209,16 @@ Page({
     this.next();
   },
 
+  /** 某题是否已作答 */
+  isAnswered(q, answers) {
+    if (!q) return false;
+    const a = answers[q.id];
+    return a !== undefined && a !== null && String(a).trim() !== '';
+  },
+
   /** 是否可进入下一题 */
   canGoNext() {
-    const q = this.data.question;
-    if (!q) return false;
-    const a = this.data.answers[q.id];
-    return a !== undefined && a !== null && String(a).trim() !== '';
+    return this.isAnswered(this.data.question, this.data.answers);
   },
 
   onNext() {
@@ -217,6 +241,7 @@ Page({
       index: nextIndex,
       question: q,
       inputValue: (this.data.answers[q.id] || '').toString(),
+      canNext: this.isAnswered(q, this.data.answers),
       progressPercent: Math.round(((nextIndex + 1) / total) * 100),
     });
   },
@@ -230,6 +255,7 @@ Page({
       index: prevIndex,
       question: q,
       inputValue: (this.data.answers[q.id] || '').toString(),
+      canNext: this.isAnswered(q, this.data.answers),
       progressPercent: Math.round(((prevIndex + 1) / this.data.total) * 100),
     });
   },
@@ -274,6 +300,7 @@ Page({
       question: this.data.lesson.questions[0],
       answers: {},
       inputValue: '',
+      canNext: false,
       progressPercent: Math.round((1 / this.data.total) * 100),
     });
   },

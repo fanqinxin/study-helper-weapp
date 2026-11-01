@@ -250,15 +250,16 @@ async function recognizeCatalog(imageUrls) {  const provider = getProvider();
 // 第三步（可选）：按课文出同步练习
 // ============================================================
 
-function buildPracticePrompt({ subject, grade, unit, title, count }) {
+function buildPracticePrompt({ subject, grade, unit, title, count, focus }) {
   const subjectName = SUBJECT_NAME[subject] || '语文';
   const unitText = unit ? `所属单元：${unit}。` : '';
+  const focusText = focus ? `本批侧重：${focus}。` : '';
   const mathRule = Number(subject) === 2
     ? `7. 这是数学题，所有选项和 answer 必须是具体数值（可带单位）或算式结果
 8. 先在草稿上完整列出每题的解题步骤并验算，确认无误后再输出；analysis 中出现的每个算式都要复算，计算结果必须与 answer 一致，禁止口算失误
 `
     : '7. 出每道题前先自己完整做一遍并验算，确认答案准确无误后再写入 answer\n';
-  return `你是小学${subjectName}教研老师，请围绕${grade}年级课文《${title}》出一套同步练习。${unitText}
+  return `你是小学${subjectName}教研老师，请围绕${grade}年级课文《${title}》出一套同步练习。${unitText}${focusText}
 
 要求：
 1. 共 ${count} 道题，全部为单选题，每题 4 个选项
@@ -355,27 +356,30 @@ async function verifyPractice(questions, ctx = {}) {
  * 按课文生成同步练习（文本模型）
  *
  * 只用于「没有题库的课文」，比如用户拍目录生成的自定义教材。
- * 两道工序：
+ * 三道约束：
  *   1. 出题：answer 必须能在 options 里原样找到，否则判分永远对不上
  *   2. 复核：独立解题再校一遍答案，答案错误的替换、题目有问题的丢弃
- *      数学题出题温度降到 0.2，复核一律温度 0
+ *   3. 分批：一次要 20 道会撞 60 秒文本超时（还会被 max_tokens 截断成半截 JSON），
+ *      所以按 5 道一批并行出、批内复核，最后合并去重
+ * 数学题出题温度 0.2，复核一律温度 0。
  */
-async function generatePractice({ subject, grade, unit, title, count = 4 }) {
-  const provider = getProvider();
-  const isMath = Number(subject) === 2;
-  const prompt = buildPracticePrompt({ subject, grade, unit, title, count });
 
-  const raw = await provider.chatText(prompt, {
-    system: '你是严谨的小学教研老师，只输出 JSON 数组，不编造超纲内容。',
-    temperature: isMath ? 0.2 : 0.6,
-  });
+/** 单批出题数量 */
+const PRACTICE_BATCH_SIZE = 5;
 
-  const parsed = BaseProvider.extractJson(raw);
-  if (!Array.isArray(parsed) || !parsed.length) {
-    throw new Error('生成结果无法解析为题目数组');
-  }
+/** 各批侧重，降低并行多批之间的题目重复率 */
+const BATCH_FOCUS = ['字词与读音', '内容理解与情节', '主题与情感', '迁移与生活应用'];
 
-  const cleaned = parsed
+/** 题量收敛到 1~20 的整数（业务层已校验，这里兜底） */
+function normalizePracticeCount(count) {
+  const n = Number(count);
+  if (!Number.isFinite(n)) return PRACTICE_BATCH_SIZE;
+  return Math.min(20, Math.max(1, Math.round(n)));
+}
+
+/** 清洗一批模型输出：答案必须能在选项里原样找到 */
+function cleanPracticeItems(parsed, limit) {
+  return parsed
     .map((q) => {
       const options = Array.isArray(q && q.options)
         ? q.options.map((o) => String(o == null ? '' : o).trim()).filter(Boolean)
@@ -383,7 +387,6 @@ async function generatePractice({ subject, grade, unit, title, count = 4 }) {
       const answer = String((q && q.answer) || '').trim();
       const stem = String((q && q.stem) || '').trim();
       if (!stem || options.length < 2) return null;
-      // 答案必须与某个选项完全一致，否则判分永远对不上
       const hit = options.find((o) => o === answer);
       if (!hit) return null;
       return {
@@ -396,13 +399,32 @@ async function generatePractice({ subject, grade, unit, title, count = 4 }) {
       };
     })
     .filter(Boolean)
-    .slice(0, count);
+    .slice(0, limit);
+}
 
+/** 出一批（≤5 道）并立即复核 */
+async function generateBatch({ subject, grade, unit, title, count, focus }) {
+  const provider = getProvider();
+  const isMath = Number(subject) === 2;
+  const prompt = buildPracticePrompt({ subject, grade, unit, title, count, focus });
+
+  const raw = await provider.chatText(prompt, {
+    system: '你是严谨的小学教研老师，只输出 JSON 数组，不编造超纲内容。',
+    temperature: isMath ? 0.2 : 0.6,
+    maxTokens: 2000,
+  });
+
+  const parsed = BaseProvider.extractJson(raw);
+  if (!Array.isArray(parsed) || !parsed.length) {
+    throw new Error('生成结果无法解析为题目数组');
+  }
+
+  const cleaned = cleanPracticeItems(parsed, count);
   if (!cleaned.length) {
     throw new Error('模型没有给出可用的题目，请稍后重试');
   }
 
-  // 第二道工序：独立复核。坏答案替换、坏题丢弃；复核调用本身失败则降级用首次结果
+  // 复核：坏答案替换、坏题丢弃；复核调用本身失败则降级用首次结果
   let verified = cleaned;
   try {
     verified = await verifyPractice(cleaned, { subject, grade, title });
@@ -414,11 +436,54 @@ async function generatePractice({ subject, grade, unit, title, count = 4 }) {
     logger.warn({ err: e.message, subject, title }, '练习复核调用失败，降级使用首次生成结果');
   }
 
-  const final = verified.slice(0, count);
-  if (!final.length) {
+  if (!verified.length) {
     throw new Error('题目复核后没有可用题目，请稍后重试');
   }
-  return final;
+  return verified;
+}
+
+async function generatePractice({ subject, grade, unit, title, count = 5 }) {
+  const total = normalizePracticeCount(count);
+  const batchCount = Math.ceil(total / PRACTICE_BATCH_SIZE);
+
+  const jobs = [];
+  for (let i = 0; i < batchCount; i += 1) {
+    jobs.push(generateBatch({
+      subject,
+      grade,
+      unit,
+      title,
+      count: Math.min(PRACTICE_BATCH_SIZE, total - i * PRACTICE_BATCH_SIZE),
+      focus: BATCH_FOCUS[i % BATCH_FOCUS.length],
+    }));
+  }
+
+  // 单批失败不影响其它批：少几道题也比整套退款重来好
+  const settled = await Promise.allSettled(jobs);
+  const merged = [];
+  let firstError = null;
+  for (const s of settled) {
+    if (s.status === 'fulfilled') merged.push(...s.value);
+    else if (!firstError) firstError = s.reason;
+  }
+
+  if (!merged.length) {
+    throw firstError || new Error('模型没有给出可用的题目，请稍后重试');
+  }
+
+  // 并行各批可能撞题：按题干去重，保持批次顺序
+  const seen = new Set();
+  const unique = merged.filter((q) => {
+    const key = q.stem.replace(/\s+/g, '');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (unique.length < total) {
+    logger.warn({ subject, title, wanted: total, got: unique.length }, '练习实出题量少于请求量');
+  }
+  return unique.slice(0, total);
 }
 
 module.exports = {

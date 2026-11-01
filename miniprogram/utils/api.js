@@ -29,7 +29,7 @@ module.exports = {
   /** 课文详情（含练习题，不含答案） */
   getLesson: (lessonId) => http.get(`/lesson/${lessonId}`),
   /** 按课文生成同步练习（消耗 1 次额度，异步入队） */
-  generatePractice: (lessonId) => http.post(`/lesson/${lessonId}/practice`),
+  generatePractice: (lessonId, count) => http.post(`/lesson/${lessonId}/practice`, { count }),
   /** 练习生成进度（轮询） */
   getPracticeStatus: (lessonId) => http.get(`/lesson/${lessonId}/practice/status`),
   /** 提交练习答案并判分 */

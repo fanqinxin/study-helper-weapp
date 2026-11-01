@@ -60,7 +60,7 @@ async function consumeOnce() {
     const lessonId = Number(msg.lessonId);
     if (!lessonId) return true;
     try {
-      await practiceService.runGeneratePractice(lessonId, Number(msg.uid), msg.refId);
+      await practiceService.runGeneratePractice(lessonId, Number(msg.uid), msg.refId, msg.count);
     } catch (e) {
       // runGeneratePractice 内部已处理失败与退款，这里只兜底记录
       logger.error({ err: e.message, lessonId }, 'worker 处理练习生成异常');

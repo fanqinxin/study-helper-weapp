@@ -117,6 +117,7 @@ router.get(
  *
  * 同样是一次长耗时 AI 调用：入队后立即返回，前端轮询 status。
  * 每次消耗 1 次额度，失败由 worker 自动退还；限流防连点。
+ * body.count：5 / 10 / 15 / 20（其它值由 service 回落默认档，不报错）
  */
 router.post(
   '/lesson/:id/practice',
@@ -127,7 +128,7 @@ router.post(
     next();
   }),
   wrap(async (req, res) => {
-    ok(res, await practiceService.createPractice(req.uid, req.params.id));
+    ok(res, await practiceService.createPractice(req.uid, req.params.id, req.body && req.body.count));
   })
 );
 

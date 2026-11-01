@@ -28,8 +28,15 @@ const PRACTICE_QUEUE = 'queue:lesson:practice';
 const STATUS_KEY = (lessonId) => `practice:gen:${lessonId}`;
 const STATUS_TTL_SEC = 10 * 60;
 
-/** 单次生成的题目数量 */
-const DEFAULT_COUNT = 4;
+/** 允许的题量档位（与小程序选择器一致，服务端只认这几档） */
+const ALLOWED_COUNTS = [5, 10, 15, 20];
+const DEFAULT_COUNT = 5;
+
+/** 题量收敛：不合法就回落到默认档，不报错打断流程 */
+function normalizeCount(count) {
+  const n = toInt(count, { min: 1, max: 100 });
+  return ALLOWED_COUNTS.includes(n) ? n : DEFAULT_COUNT;
+}
 
 /** 读取课文及其教材信息（带归属校验） */
 async function loadLesson(uid, lessonId) {
@@ -65,10 +72,14 @@ async function countQuestions(lessonId) {
  * 发起生成任务
  *
  * 幂等：已有题目直接返回 ready；正在生成直接返回 pending，绝不重复扣费。
+ * 题量只认 5/10/15/20 四档，其它值回落默认档（前端传错不该让用户白扣额度）。
+ *
+ * @param {number} [count] 期望题量
  */
-async function createPractice(uid, lessonId) {
+async function createPractice(uid, lessonId, count) {
   const lesson = await loadLesson(uid, lessonId);
   const id = Number(lesson.id);
+  const wantCount = normalizeCount(count);
 
   const existing = await countQuestions(id);
   if (existing > 0) {
@@ -94,7 +105,7 @@ async function createPractice(uid, lessonId) {
 
     await redis.lpush(
       PRACTICE_QUEUE,
-      JSON.stringify({ lessonId: id, uid, refId })
+      JSON.stringify({ lessonId: id, uid, refId, count: wantCount })
     );
   } catch (e) {
     await redis.del(STATUS_KEY(id)).catch(() => {});
@@ -114,10 +125,12 @@ async function createPractice(uid, lessonId) {
  * 执行生成（由 worker 调用）
  *
  * 重试时先清空旧题目，避免同一课堆积重复题。
+ * 题量来自队列消息；老消息没有 count 字段时按默认档出题。
  */
-async function runGeneratePractice(lessonId, uid, refId) {
+async function runGeneratePractice(lessonId, uid, refId, count) {
   const id = Number(lessonId);
   if (!Number.isInteger(id) || id <= 0) return;
+  const wantCount = normalizeCount(count);
 
   let lesson;
   try {
@@ -142,7 +155,7 @@ async function runGeneratePractice(lessonId, uid, refId) {
       grade: Number(lesson.grade),
       unit: lesson.unit,
       title: lesson.title,
-      count: DEFAULT_COUNT,
+      count: wantCount,
     });
 
     await db.transaction(async (conn) => {
@@ -183,6 +196,8 @@ async function getPracticeStatus(uid, lessonId) {
 
 module.exports = {
   PRACTICE_QUEUE,
+  ALLOWED_COUNTS,
+  DEFAULT_COUNT,
   createPractice,
   runGeneratePractice,
   getPracticeStatus,

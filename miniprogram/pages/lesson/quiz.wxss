@@ -337,14 +337,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(224, 163, 46, 0.22);
+  transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .footer__next--active {
   opacity: 0.86;
 }
 
+/* 未作答：浅色静默态，选完答案才变深色主按钮 */
 .footer__next--disabled {
-  opacity: 0.45;
+  background: var(--progress-track);
+  color: var(--text-quaternary);
+  box-shadow: none;
 }
 
 /* ---------- 无题目：AI 出题入口 ---------- */
@@ -353,6 +358,46 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.gen__label {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.counts {
+  width: 100%;
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.count {
+  flex: 1;
+  height: 84rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 2rpx solid var(--border);
+  color: var(--text-secondary);
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.count--active {
+  background: var(--brand-light);
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.count--locked {
+  opacity: 0.5;
 }
 
 .gen__btn {

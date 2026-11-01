@@ -264,6 +264,55 @@ test('非数学学科：出题温度 0.6', async () => {
   assert.strictEqual(calls[0].temperature, 0.6);
 });
 
+test('要 10 道题：拆成 2 批并行，每批各自复核', async () => {
+  reset();
+  state.generateResult = [MATH_Q, GOOD_Q];
+  state.verifyResult = [
+    { index: 0, ok: true, answer: '38', analysis: '' },
+    { index: 1, ok: true, answer: '47', analysis: '' },
+  ];
+
+  const out = await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 10 });
+
+  assert.strictEqual(calls.length, 4, '2 批 ×（出题 + 复核）');
+  assert.strictEqual(calls.filter((c) => c.kind === 'generate').length, 2);
+  assert.strictEqual(calls.filter((c) => c.kind === 'verify').length, 2);
+  assert.strictEqual(out.length, 2, '两批题干相同，去重后只剩 2 道');
+});
+
+test('题量收敛：传 100 也只出到 20 道的批次上限', async () => {
+  reset();
+  state.generateResult = [GOOD_Q];
+  state.verifyResult = [{ index: 0, ok: true, answer: '47', analysis: '' }];
+
+  await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 100 });
+
+  assert.strictEqual(calls.filter((c) => c.kind === 'generate').length, 4, '20 道 = 4 批');
+});
+
+test('单批失败不影响其它批：返回已成功的部分', async () => {
+  reset();
+  // 让第一批（第一次出题调用）失败，后续批正常
+  let n = 0;
+  const realChatText = FakeProvider.prototype.chatText;
+  FakeProvider.prototype.chatText = async function (prompt, opts) {
+    if (!prompt.includes('阅卷组长') && n++ === 0) {
+      calls.push({ kind: 'generate', temperature: opts && opts.temperature });
+      throw new Error('第一批超时');
+    }
+    return realChatText.call(this, prompt, opts);
+  };
+
+  try {
+    state.generateResult = [GOOD_Q];
+    state.verifyResult = [{ index: 0, ok: true, answer: '47', analysis: '' }];
+    const out = await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 10 });
+    assert.ok(out.length >= 1, '一批失败不应拖垮整套');
+  } finally {
+    FakeProvider.prototype.chatText = realChatText;
+  }
+});
+
 /** ── 执行 ───────────────────────────────────────────────── */
 (async () => {
   let failed = 0;

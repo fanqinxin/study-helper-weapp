@@ -113,10 +113,11 @@ const fakeDb = {
 };
 
 /** ── 假 AI ──────────────────────────────────────────────── */
-const aiState = { calls: 0, result: [], fail: null };
+const aiState = { calls: 0, result: [], fail: null, args: null };
 const fakeAi = {
-  async generatePractice() {
+  async generatePractice(args) {
     aiState.calls += 1;
+    aiState.args = args;
     if (aiState.fail) throw new Error(aiState.fail);
     return aiState.result;
   },
@@ -215,6 +216,7 @@ function reset() {
   quotaState.consumed = [];
   quotaState.refunded = [];
   quotaState.insufficient = false;
+  aiState.args = null;
   seedLesson();
 }
 
@@ -339,6 +341,42 @@ test('别人的自定义教材：不可生成，也不扣费', async () => {
 
   await assert.rejects(() => practice.createPractice(1, 7), /课文不存在/);
   assert.strictEqual(quotaState.consumed.length, 0);
+});
+
+test('题量透传：选了 15 道，入队消息带 15', async () => {
+  reset();
+  await practice.createPractice(1, 7, 15);
+
+  const msg = JSON.parse(redisState.pushed[0].value);
+  assert.strictEqual(msg.count, 15, '题量必须进队列，否则 worker 按默认档出题');
+});
+
+test('非法题量：回落默认 5，不报错', async () => {
+  reset();
+  const r = await practice.createPractice(1, 7, 999);
+
+  assert.strictEqual(r.status, 'pending');
+  const msg = JSON.parse(redisState.pushed[0].value);
+  assert.strictEqual(msg.count, 5, '只认 5/10/15/20，其它值回落默认档');
+});
+
+test('worker 按队列里的题量出题', async () => {
+  reset();
+  await practice.createPractice(1, 7, 20);
+  aiState.result = [{ type: 1, stem: '题', options: ['甲', '乙'], answer: '甲', analysis: '', difficulty: 1 }];
+
+  await practice.runGeneratePractice(7, 1, 'lp-7', 20);
+
+  assert.strictEqual(aiState.args.count, 20, 'AI 层收到的题量必须与用户选择一致');
+});
+
+test('老队列消息没有 count：按默认 5 道出题', async () => {
+  reset();
+  aiState.result = [{ type: 1, stem: '题', options: ['甲', '乙'], answer: '甲', analysis: '', difficulty: 1 }];
+
+  await practice.runGeneratePractice(7, 1, 'lp-7', undefined);
+
+  assert.strictEqual(aiState.args.count, 5);
 });
 
 /** ── 执行 ───────────────────────────────────────────────── */

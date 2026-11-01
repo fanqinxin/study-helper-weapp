@@ -12,12 +12,23 @@
     />
 
     <view class="gen">
+      <view class="gen__label">想练几道？</view>
+      <view class="counts">
+        <view
+          wx:for="{{countOptions}}"
+          wx:key="*this"
+          class="count {{practiceCount === item ? 'count--active' : ''}} {{generating ? 'count--locked' : ''}}"
+          data-count="{{item}}"
+          bindtap="onPickCount"
+        >{{item}} 题</view>
+      </view>
+
       <view
         class="gen__btn {{generating ? 'gen__btn--busy' : ''}}"
         hover-class="gen__btn--active"
         bindtap="onGenerate"
       >
-        {{generating ? 'AI 出题中 ' + genSeconds + 's…' : '让 AI 出这一课的练习（1 次额度）'}}
+        {{generating ? 'AI 出题中 ' + genSeconds + 's…' : '让 AI 出 ' + practiceCount + ' 道练习（1 次额度）'}}
       </view>
 
       <view class="gen__tip">生成完成后自动刷新；失败会自动退还额度</view>
@@ -131,14 +142,19 @@
 
     <view
       wx:if="{{question.type === 1}}"
-      class="footer__next {{canGoNext() ? '' : 'footer__next--disabled'}}"
+      class="footer__next {{canNext ? '' : 'footer__next--disabled'}}"
       hover-class="footer__next--active"
       bindtap="onNext"
     >
       {{index + 1 >= total ? '提交批改' : '下一题'}}
     </view>
 
-    <view wx:else class="footer__next" hover-class="footer__next--active" bindtap="onConfirmInput">
+    <view
+      wx:else
+      class="footer__next {{canNext ? '' : 'footer__next--disabled'}}"
+      hover-class="footer__next--active"
+      bindtap="onConfirmInput"
+    >
       {{index + 1 >= total ? '提交批改' : '确认'}}
     </view>
   </view>
