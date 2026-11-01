@@ -122,7 +122,8 @@ function buildJudgePrompt(questions, { subject, lessonTitle, knowledgePoints } =
 2. 学生答案为 null（看不清或未作答）时，is_correct 填 null
 3. analysis 用小学生能听懂的话讲解，控制在 60 字内
 4. knowledge_point 填该题对应的知识点，如"拟人修辞""两位数乘法"
-5. 只输出 JSON 数组，不要任何解释文字、不要 markdown 代码块
+5. 判题前先自己完整算一遍每道题，确保 correct_ans 正确；analysis 中出现的每个算式都要复算，禁止口算失误
+6. 只输出 JSON 数组，不要任何解释文字、不要 markdown 代码块
 
 待批改题目：
 ${JSON.stringify(questions, null, 2)}
@@ -252,6 +253,11 @@ async function recognizeCatalog(imageUrls) {  const provider = getProvider();
 function buildPracticePrompt({ subject, grade, unit, title, count }) {
   const subjectName = SUBJECT_NAME[subject] || '语文';
   const unitText = unit ? `所属单元：${unit}。` : '';
+  const mathRule = Number(subject) === 2
+    ? `7. 这是数学题，所有选项和 answer 必须是具体数值（可带单位）或算式结果
+8. 先在草稿上完整列出每题的解题步骤并验算，确认无误后再输出；analysis 中出现的每个算式都要复算，计算结果必须与 answer 一致，禁止口算失误
+`
+    : '7. 出每道题前先自己完整做一遍并验算，确认答案准确无误后再写入 answer\n';
   return `你是小学${subjectName}教研老师，请围绕${grade}年级课文《${title}》出一套同步练习。${unitText}
 
 要求：
@@ -261,7 +267,7 @@ function buildPracticePrompt({ subject, grade, unit, title, count }) {
 4. analysis 用小学生能听懂的话讲清为什么，60 字内
 5. difficulty：1=简单 2=中等 3=稍难
 6. 只输出 JSON 数组，不要解释文字、不要 markdown 代码块
-
+${mathRule}
 输出格式：
 [
   { "stem": "题干", "options": ["选项一", "选项二", "选项三", "选项四"], "answer": "正确选项原文", "analysis": "讲解", "difficulty": 2 }
@@ -269,19 +275,99 @@ function buildPracticePrompt({ subject, grade, unit, title, count }) {
 }
 
 /**
+ * 复核提示词：让另一个角色独立解题、只信自己的计算。
+ *
+ * 为什么单独一道工序：出题与验证交给同一个上下文，模型倾向于"我觉得我算的没错"，
+ * 把原答案照抄回来。换一个没有历史包袱的调用、并明确要求独立解答，
+ * 才能把 60-18 写成 38 这类算式与结论自相矛盾的低级错误拦下来。
+ */
+function buildVerifyPrompt(questions, { subject, grade, title } = {}) {
+  const subjectName = SUBJECT_NAME[subject] || '语文';
+  const brief = title ? `（${grade ? `${grade}年级` : ''}${subjectName}·课文《${title}》同步练习）` : '';
+  return `你是小学${subjectName}阅卷组长，负责复核一组刚出的同步练习题${brief}。
+请**独立解答**下面每道题——不要参考题目附带的 answer 和 analysis，先算出你自己的答案，再判断原答案是否正确。
+
+复核要求：
+1. 每道题先完整列出你的解题步骤并验算，得到你自己的答案
+2. 你的答案与原 answer 一致 → ok 填 true
+3. 你的答案与原 answer 不一致 → ok 填 false，answer 改为你的答案（必须与该题 options 中某一项原文完全一致），analysis 用你的正确讲解重写
+4. 题目本身有问题（题干条件矛盾、无正确选项、明显超纲）→ ok 填 false，answer 填 null
+5. analysis 中出现的每个算式都要复算，结果必须与 answer 一致，禁止口算失误
+6. 只输出 JSON 数组，不要解释文字、不要 markdown 代码块
+
+待复核题目（index 对应数组下标）：
+${JSON.stringify(questions.map((q, i) => ({ index: i, stem: q.stem, options: q.options, answer: q.answer })), null, 2)}
+
+输出格式：
+[
+  { "index": 0, "ok": true, "answer": "正确选项原文", "analysis": "讲解" }
+]`;
+}
+
+/**
+ * 独立复核练习题答案。
+ *
+ * 复核调用失败时**降级而非报错**：复核是质量加固，不是必要条件，
+ * 因为复核网络抖动把整套题退掉退款，比带着小概率错题上线更伤体验。
+ * @returns {Promise<Array>} 复核后的题目数组（可能比传入的少——坏题被丢弃）
+ */
+async function verifyPractice(questions, ctx = {}) {
+  const provider = getProvider();
+  const prompt = buildVerifyPrompt(questions, ctx);
+
+  const raw = await provider.chatText(prompt, {
+    system: '你是极严谨的小学阅卷组长，复核时只相信自己的独立计算，绝不迁就原答案。',
+    temperature: 0,
+  });
+
+  const parsed = BaseProvider.extractJson(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error('复核结果无法解析为数组');
+  }
+
+  const byIndex = new Map();
+  for (const r of parsed) {
+    const i = Number(r && r.index);
+    if (Number.isInteger(i)) byIndex.set(i, r);
+  }
+
+  return questions
+    .map((q, i) => {
+      const v = byIndex.get(i);
+      if (!v) return q; // 复核漏了这题：保守保留原样
+      const vAns = v.answer === null || v.answer === undefined ? null : String(v.answer).trim();
+      if (v.ok === false) {
+        if (!vAns) return null; // 题目本身有问题 → 丢弃
+        const hit = q.options.find((o) => o === vAns);
+        if (!hit) return null; // 复核给的答案对不上选项 → 宁可不出这道题
+        return {
+          ...q,
+          answer: hit,
+          analysis: v.analysis ? String(v.analysis).trim() : q.analysis,
+        };
+      }
+      return q;
+    })
+    .filter(Boolean);
+}
+
+/**
  * 按课文生成同步练习（文本模型）
  *
  * 只用于「没有题库的课文」，比如用户拍目录生成的自定义教材。
- * 生成的题目必须自校验：answer 一定要能在 options 里原样找到，
- * 否则练习页会永远判错。
+ * 两道工序：
+ *   1. 出题：answer 必须能在 options 里原样找到，否则判分永远对不上
+ *   2. 复核：独立解题再校一遍答案，答案错误的替换、题目有问题的丢弃
+ *      数学题出题温度降到 0.2，复核一律温度 0
  */
 async function generatePractice({ subject, grade, unit, title, count = 4 }) {
   const provider = getProvider();
+  const isMath = Number(subject) === 2;
   const prompt = buildPracticePrompt({ subject, grade, unit, title, count });
 
   const raw = await provider.chatText(prompt, {
     system: '你是严谨的小学教研老师，只输出 JSON 数组，不编造超纲内容。',
-    temperature: 0.6,
+    temperature: isMath ? 0.2 : 0.6,
   });
 
   const parsed = BaseProvider.extractJson(raw);
@@ -315,7 +401,24 @@ async function generatePractice({ subject, grade, unit, title, count = 4 }) {
   if (!cleaned.length) {
     throw new Error('模型没有给出可用的题目，请稍后重试');
   }
-  return cleaned;
+
+  // 第二道工序：独立复核。坏答案替换、坏题丢弃；复核调用本身失败则降级用首次结果
+  let verified = cleaned;
+  try {
+    verified = await verifyPractice(cleaned, { subject, grade, title });
+    const dropped = cleaned.length - verified.length;
+    if (dropped > 0) {
+      logger.warn({ subject, title, dropped }, '练习复核丢弃了不合格题目');
+    }
+  } catch (e) {
+    logger.warn({ err: e.message, subject, title }, '练习复核调用失败，降级使用首次生成结果');
+  }
+
+  const final = verified.slice(0, count);
+  if (!final.length) {
+    throw new Error('题目复核后没有可用题目，请稍后重试');
+  }
+  return final;
 }
 
 module.exports = {
@@ -325,6 +428,7 @@ module.exports = {
   gradeHomework,
   recognizeCatalog,
   generatePractice,
+  verifyPractice,
   toAbsoluteUrls,
   SUBJECT_NAME,
 };
