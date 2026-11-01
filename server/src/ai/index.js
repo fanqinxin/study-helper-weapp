@@ -442,48 +442,71 @@ async function generateBatch({ subject, grade, unit, title, count, focus }) {
   return verified;
 }
 
+/** 最多生成轮次：首轮 + 两次补题。模型连续失败时不让它无限烧 token */
+const MAX_PRACTICE_ROUNDS = 3;
+
 async function generatePractice({ subject, grade, unit, title, count = 5 }) {
   const total = normalizePracticeCount(count);
-  const batchCount = Math.ceil(total / PRACTICE_BATCH_SIZE);
-
-  const jobs = [];
-  for (let i = 0; i < batchCount; i += 1) {
-    jobs.push(generateBatch({
-      subject,
-      grade,
-      unit,
-      title,
-      count: Math.min(PRACTICE_BATCH_SIZE, total - i * PRACTICE_BATCH_SIZE),
-      focus: BATCH_FOCUS[i % BATCH_FOCUS.length],
-    }));
-  }
-
-  // 单批失败不影响其它批：少几道题也比整套退款重来好
-  const settled = await Promise.allSettled(jobs);
-  const merged = [];
+  const seen = new Set();
+  const pool = [];
   let firstError = null;
-  for (const s of settled) {
-    if (s.status === 'fulfilled') merged.push(...s.value);
-    else if (!firstError) firstError = s.reason;
+
+  /**
+   * 补题循环。
+   *
+   * 只出一轮是不够的：某批超时、或复核把不合格的题丢掉，
+   * 都会让"选了 10 道最后只出 4 道"。所以按缺口继续补，
+   * 补题轮多要 2 道抵消复核丢弃，最多补到目标数量为止。
+   */
+  for (let round = 0; round < MAX_PRACTICE_ROUNDS && pool.length < total; round += 1) {
+    const need = total - pool.length;
+    const ask = round === 0 ? need : Math.min(PRACTICE_BATCH_SIZE, need + 2);
+    const batchCount = Math.max(1, Math.ceil(ask / PRACTICE_BATCH_SIZE));
+
+    const jobs = [];
+    for (let i = 0; i < batchCount; i += 1) {
+      jobs.push(generateBatch({
+        subject,
+        grade,
+        unit,
+        title,
+        count: Math.min(PRACTICE_BATCH_SIZE, ask - i * PRACTICE_BATCH_SIZE),
+        // focus 轮转：补题时换个侧重，降低"补出来的题和已有题重复"的概率
+        focus: BATCH_FOCUS[(round * 2 + i) % BATCH_FOCUS.length],
+      }));
+    }
+
+    // 单批失败不影响其它批：少几道题也比整套退款重来好
+    const settled = await Promise.allSettled(jobs);
+    let added = 0;
+    for (const s of settled) {
+      if (s.status === 'rejected') {
+        if (!firstError) firstError = s.reason;
+        continue;
+      }
+      for (const q of s.value) {
+        const key = q.stem.replace(/\s+/g, '');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        pool.push(q);
+        added += 1;
+      }
+    }
+
+    // 一轮下来一道都没新增：模型大概率挂了，再补只会白烧 token
+    if (!added) break;
   }
 
-  if (!merged.length) {
+  if (!pool.length) {
     throw firstError || new Error('模型没有给出可用的题目，请稍后重试');
   }
-
-  // 并行各批可能撞题：按题干去重，保持批次顺序
-  const seen = new Set();
-  const unique = merged.filter((q) => {
-    const key = q.stem.replace(/\s+/g, '');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  if (unique.length < total) {
-    logger.warn({ subject, title, wanted: total, got: unique.length }, '练习实出题量少于请求量');
+  if (pool.length < total) {
+    logger.warn(
+      { subject, title, wanted: total, got: pool.length },
+      '练习实出题量少于请求量，已尽力补齐'
+    );
   }
-  return unique.slice(0, total);
+  return pool.slice(0, total);
 }
 
 module.exports = {

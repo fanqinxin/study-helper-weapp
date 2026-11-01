@@ -117,8 +117,10 @@ async function createPractice(uid, lessonId, count) {
     throw e;
   }
 
-  logger.info({ uid, lessonId: id }, '练习生成任务已入队');
-  return { lessonId: id, status: 'pending', count: 0 };
+  // reqCount 一定要打：出题量不对时，日志里能立刻分清是
+  // 「前端没传 / 老 worker 不认 count」还是「模型出题不足被补题逻辑拦下」
+  logger.info({ uid, lessonId: id, reqCount: wantCount }, '练习生成任务已入队');
+  return { lessonId: id, status: 'pending', count: wantCount };
 }
 
 /**
@@ -169,7 +171,10 @@ async function runGeneratePractice(lessonId, uid, refId, count) {
       }
     });
 
-    logger.info({ uid, lessonId: id, count: questions.length }, '课后练习生成成功');
+    logger.info(
+      { uid, lessonId: id, reqCount: wantCount, count: questions.length },
+      '课后练习生成成功'
+    );
   } catch (e) {
     await quota
       .refund(uid, refId || `lp-${id}`, '课后练习生成失败退还')

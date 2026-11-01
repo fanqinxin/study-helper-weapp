@@ -82,10 +82,23 @@ class FakeProvider {
     calls.push({ kind: isVerify ? 'verify' : 'generate', temperature: opts.temperature });
     if (isVerify) {
       if (state.verifyFail) throw new Error('复核服务超时');
+      state.verifySeq += 1;
+      if (Array.isArray(state.verifyQueue) && state.verifyQueue.length) {
+        const idx = Math.min(state.verifySeq - 1, state.verifyQueue.length - 1);
+        return JSON.stringify(state.verifyQueue[idx]);
+      }
       return JSON.stringify(state.verifyResult);
     }
+    state.genSeq += 1;
     if (state.generateFail) throw new Error(state.generateFail);
-    return JSON.stringify(state.generateResult);
+    // 指定「第 N 批出题失败」，用来自测补题逻辑
+    if (state.generateFailAt && state.genSeq === state.generateFailAt) {
+      throw new Error('这一批请求超时');
+    }
+    const result = state.generateFactory
+      ? state.generateFactory(state.genSeq)
+      : state.generateResult;
+    return JSON.stringify(result);
   }
 
   async chatVision() {
@@ -106,8 +119,16 @@ stub(path.resolve(SRC, 'ai/provider/openaiCompat'), UnusedProvider);
 const state = {
   generateResult: [],
   verifyResult: [],
+  /** 按调用顺序消费的复核结果队列（用完后沿用最后一项） */
+  verifyQueue: null,
+  /** (seq) => 题目数组：用于生成带唯一题干的批次，验证补题去重 */
+  generateFactory: null,
   generateFail: null,
+  /** 指定第几次出题调用失败，用于自测补题 */
+  generateFailAt: null,
   verifyFail: null,
+  genSeq: 0,
+  verifySeq: 0,
 };
 
 const ai = require(path.resolve(SRC, 'ai/index.js'));
@@ -137,9 +158,24 @@ function reset() {
   calls.length = 0;
   state.generateResult = [];
   state.verifyResult = [];
+  state.verifyQueue = null;
+  state.generateFactory = null;
   state.generateFail = null;
+  state.generateFailAt = null;
   state.verifyFail = null;
+  state.genSeq = 0;
+  state.verifySeq = 0;
 }
+
+/** 造一批题干唯一、答案全部正确的题，用于验证补题与去重 */
+const makeBatch = (seq, size = 5) =>
+  Array.from({ length: size }, (_, i) => ({
+    stem: `第${seq}批第${i}题：比35多12的数是多少？`,
+    options: ['23', '47', '45', '37'],
+    answer: '47',
+    analysis: '35+12=47。',
+    difficulty: 1,
+  }));
 
 /** ── 用例 ───────────────────────────────────────────────── */
 
@@ -243,7 +279,8 @@ test('调用序与温度：先出题后复核；数学出题 0.2、复核 0', as
   state.generateResult = [MATH_Q];
   state.verifyResult = [{ index: 0, ok: true, answer: '38', analysis: '' }];
 
-  await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 4 });
+  // 只要 1 道：一轮就够，正好也验证「够数就不再补题」
+  await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 1 });
 
   assert.strictEqual(calls.length, 2, '应恰好两次调用：出题 + 复核');
   assert.strictEqual(calls[0].kind, 'generate');
@@ -264,7 +301,7 @@ test('非数学学科：出题温度 0.6', async () => {
   assert.strictEqual(calls[0].temperature, 0.6);
 });
 
-test('要 10 道题：拆成 2 批并行，每批各自复核', async () => {
+test('要 10 道题：首轮拆成 2 批并行，每批各自复核', async () => {
   reset();
   state.generateResult = [MATH_Q, GOOD_Q];
   state.verifyResult = [
@@ -274,10 +311,49 @@ test('要 10 道题：拆成 2 批并行，每批各自复核', async () => {
 
   const out = await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 10 });
 
-  assert.strictEqual(calls.length, 4, '2 批 ×（出题 + 复核）');
-  assert.strictEqual(calls.filter((c) => c.kind === 'generate').length, 2);
-  assert.strictEqual(calls.filter((c) => c.kind === 'verify').length, 2);
+  const firstRound = calls.slice(0, 4);
+  assert.strictEqual(firstRound.filter((c) => c.kind === 'generate').length, 2, '首轮 2 批');
+  assert.strictEqual(firstRound.filter((c) => c.kind === 'verify').length, 2, '每批各自复核');
   assert.strictEqual(out.length, 2, '两批题干相同，去重后只剩 2 道');
+});
+
+test('某批超时导致题量不足：自动补一批，补到目标题量', async () => {
+  reset();
+  state.generateFactory = (seq) => makeBatch(seq);
+  state.verifyResult = []; // 复核未给条目 → 保守保留
+  state.generateFailAt = 2; // 第二批（并行里的第二道调用）超时
+
+  const out = await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 10 });
+
+  assert.strictEqual(out.length, 10, '少一批必须补回来，不能只交 5 道');
+  assert.strictEqual(
+    calls.filter((c) => c.kind === 'generate').length,
+    3,
+    '首轮 2 批 + 补 1 批'
+  );
+  const stems = new Set(out.map((q) => q.stem));
+  assert.strictEqual(stems.size, 10, '补出来的题不能和已有题重复');
+});
+
+test('复核丢弃题目导致题量不足：自动补题到目标', async () => {
+  reset();
+  state.generateFactory = (seq) => makeBatch(seq);
+  // 第一次复核丢掉 2 道，第二次复核没有返回条目（保守全保留）
+  state.verifyQueue = [
+    [
+      { index: 0, ok: true, answer: '47', analysis: '' },
+      { index: 1, ok: true, answer: '47', analysis: '' },
+      { index: 2, ok: true, answer: '47', analysis: '' },
+      { index: 3, ok: false, answer: null, analysis: null },
+      { index: 4, ok: false, answer: null, analysis: null },
+    ],
+    [],
+  ];
+
+  const out = await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 5 });
+
+  assert.strictEqual(out.length, 5, '复核丢题后要补到用户选的题量');
+  assert.strictEqual(calls.filter((c) => c.kind === 'generate').length, 2);
 });
 
 test('题量收敛：传 100 也只出到 20 道的批次上限', async () => {
@@ -287,7 +363,7 @@ test('题量收敛：传 100 也只出到 20 道的批次上限', async () => {
 
   await ai.generatePractice({ subject: 2, grade: 1, title: '加法', count: 100 });
 
-  assert.strictEqual(calls.filter((c) => c.kind === 'generate').length, 4, '20 道 = 4 批');
+  assert.strictEqual(calls.slice(0, 8).filter((c) => c.kind === 'generate').length, 4, '首轮 20 道 = 4 批');
 });
 
 test('单批失败不影响其它批：返回已成功的部分', async () => {

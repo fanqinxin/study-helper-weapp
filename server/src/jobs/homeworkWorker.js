@@ -82,6 +82,12 @@ async function consumeOnce() {
 
 async function main() {
   logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE] }, '任务 Worker 已启动');
+  // 可辨识的启动标记：排查「选了 10 道只出 4 道」时，先看这行在不在，
+  // 不在就说明 worker 容器还跑着旧镜像（旧版把题量写死成 4）
+  logger.info(
+    { practiceCounts: practiceService.ALLOWED_COUNTS, practiceDefault: practiceService.DEFAULT_COUNT },
+    '练习出题队列已就绪'
+  );
 
   try {
     await db.ping();

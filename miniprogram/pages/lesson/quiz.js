@@ -142,7 +142,14 @@ Page({
       try {
         const st = await api.getPracticeStatus(this.data.lessonId);
         if (st.status === 'ready') {
-          this.finishGenerate(true);
+          // 题量可能会少于所选题量（个别题没通过复核被丢弃），
+          // 明确告诉家长实际出了几道，而不是让人以为选择器没生效
+          const got = Number(st.count) || 0;
+          const want = Number(this.data.practiceCount) || 0;
+          this.finishGenerate(
+            true,
+            got > 0 && want > got ? `本次出了 ${got} 道，部分题目未通过复核` : ''
+          );
           return;
         }
         if (st.status === 'none') {
@@ -171,8 +178,10 @@ Page({
     this.stopGenerate();
     this.setData({ generating: false });
     if (ok) {
-      wx.showToast({ title: '练习已生成', icon: 'success' });
       if (app.refreshQuota) app.refreshQuota();
+      // 有 msg 说明题量不足，用普通提示，不要用「成功」的绿勾
+      if (msg) wx.showToast({ title: msg, icon: 'none', duration: 2600 });
+      else wx.showToast({ title: '练习已生成', icon: 'success' });
       this.load(this.data.lessonId);
       return;
     }
