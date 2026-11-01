@@ -55,6 +55,7 @@ const state = {
   lessons: [],
   calls: [],
   clock: Date.now(),
+  user: { id: 1, lesson_progress: 0, textbook_id: null },
 };
 
 let nextId = 1;
@@ -108,6 +109,7 @@ async function route(sql, params) {
   }
   if (/^INSERT INTO lesson/.test(s)) {
     state.lessons.push({
+      id: state.lessons.length + 1,
       textbook_id: params[0],
       seq: params[1],
       title: params[2],
@@ -118,6 +120,19 @@ async function route(sql, params) {
   }
   if (/^SELECT COUNT\(\*\) AS cnt FROM lesson WHERE textbook_id = \?$/.test(s)) {
     return [{ cnt: state.lessons.filter((l) => l.textbook_id === params[0]).length }];
+  }
+  if (/^SELECT l\.id, l\.seq, l\.textbook_id AS textbookId/.test(s)) {
+    const [lessonId, uid] = params;
+    const l = state.lessons.find((x) => x.id === Number(lessonId));
+    if (!l) return [];
+    const tb = state.textbook;
+    const owned = tb && (Number(tb.is_custom) === 0 || Number(tb.owner_uid) === Number(uid));
+    return owned ? [{ id: l.id, seq: l.seq, textbookId: l.textbook_id }] : [];
+  }
+  if (/^UPDATE user SET lesson_progress = \?, textbook_id = \? WHERE id = \?$/.test(s)) {
+    state.user.lesson_progress = params[0];
+    state.user.textbook_id = params[1];
+    return { affectedRows: 1 };
   }
   throw new Error('假数据库未适配的 SQL：' + s);
 }
@@ -202,12 +217,36 @@ function reset() {
   state.lessons = [];
   state.calls = [];
   state.clock = Date.now();
+  state.user = { id: 1, lesson_progress: 0, textbook_id: null };
   aiState.calls = 0;
   aiState.result = [];
   aiState.fail = null;
   queueState.pushed = [];
   quotaState.consumed = [];
   quotaState.refunded = [];
+}
+
+/** 造一本有 n 篇课文的教材 */
+function seedLessons(n = 5, { ownerUid = 1, isCustom = 1 } = {}) {
+  state.textbook = {
+    id: 2,
+    name: '我的教材',
+    subject: 1,
+    grade: 1,
+    volume: 1,
+    is_custom: isCustom,
+    owner_uid: ownerUid,
+    status: 1,
+    created_at: new Date(state.clock),
+  };
+  state.lessons = Array.from({ length: n }, (_, i) => ({
+    id: i + 1,
+    textbook_id: 2,
+    seq: i + 1,
+    title: `课文${i + 1}`,
+    unit: '第一单元',
+    knowledge_points: '[]',
+  }));
 }
 
 const tests = [];
@@ -347,6 +386,51 @@ test('参数校验：非法学科 / 过多图片直接报错，且不扣额度',
   );
   assert.strictEqual(quotaState.consumed.length, 0, '校验失败不应扣额度');
   assert.strictEqual(state.textbook, null);
+});
+
+test('设置当前课文：选第 3 课 → 进度存 2，让它成为「当前」', async () => {
+  reset();
+  seedLessons(5);
+
+  const r = await textbook.setCurrentLesson(1, 3);
+
+  assert.strictEqual(r.lessonProgress, 2, '当前课 = progress + 1，所以存 seq-1');
+  assert.strictEqual(state.user.lesson_progress, 2);
+  assert.strictEqual(state.user.textbook_id, 2, '当前教材要一起切到课文所属那本');
+});
+
+test('设置当前课文：允许往回调（学 5 课改回学 2 课）', async () => {
+  reset();
+  seedLessons(5);
+
+  await textbook.setCurrentLesson(1, 5);
+  const r = await textbook.setCurrentLesson(1, 2);
+
+  assert.strictEqual(r.lessonProgress, 1, '手动调整必须覆盖旧进度，不能被 GREATEST 顶回去');
+  assert.strictEqual(state.user.lesson_progress, 1);
+});
+
+test('设置当前课文：第 1 课 → 进度 0', async () => {
+  reset();
+  seedLessons(3);
+
+  const r = await textbook.setCurrentLesson(1, 1);
+  assert.strictEqual(r.lessonProgress, 0);
+});
+
+test('设置当前课文：别人的自定义教材不可设', async () => {
+  reset();
+  seedLessons(5, { ownerUid: 999 });
+
+  await assert.rejects(() => textbook.setCurrentLesson(1, 3), /课文不存在/);
+  assert.strictEqual(state.user.lesson_progress, 0, '越权时不能写进度');
+});
+
+test('设置当前课文：非法 ID 直接拒绝', async () => {
+  reset();
+  seedLessons(2);
+
+  await assert.rejects(() => textbook.setCurrentLesson(1, 'abc'), /课文 ID 不合法/);
 });
 
 /** ── 执行 ───────────────────────────────────────────────── */

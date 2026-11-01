@@ -30,6 +30,8 @@ Page({
     subject: 1,
     /** 三个学科及是否有可用教材 */
     subjects: [],
+    /** 是否展开「当前学到哪一课」选择面板 */
+    showPicker: false,
   },
 
   onLoad() {
@@ -58,8 +60,28 @@ Page({
   },
 
   async load() {
-    const user = getUser();
+    let user = getUser();
     this.setData({ loading: true });
+
+    // 进度以服务端为准：本地 storage 只是登录/切教材时的快照，
+    // 答完一课服务端会用 GREATEST 推进 lesson_progress，本地不会自动同步。
+    if (user) {
+      try {
+        const profile = await api.getProfile();
+        if (profile) {
+          user = {
+            ...user,
+            grade: profile.grade,
+            textbookId: profile.textbookId,
+            lessonProgress: Number(profile.lessonProgress) || 0,
+          };
+          setUser(user);
+          app.globalData.user = user;
+        }
+      } catch (e) {
+        // 拉取失败就用本地快照，不阻塞页面
+      }
+    }
 
     // 先取"可选教材"，用来判断哪些学科能直接切换
     let all = [];
@@ -186,5 +208,47 @@ Page({
   onSwitchTextbook() {
     const subject = Number(this.data.subject) || 1;
     wx.navigateTo({ url: `/pages/textbook/center?subject=${subject}` });
+  },
+
+  /** 展开「当前学到哪一课」选择面板 */
+  onOpenPicker() {
+    if (!this.data.lessons.length) {
+      wx.showToast({ title: '这本教材还没有课文', icon: 'none' });
+      return;
+    }
+    this.setData({ showPicker: true });
+  },
+
+  onClosePicker() {
+    this.setData({ showPicker: false });
+  },
+
+  /**
+   * 选中某一课作为「当前学到」
+   *
+   * 服务端把 lesson_progress 设成 seq-1，让这一课变成「当前」，
+   * 前面的课标记为已练；允许往回调（学校进度未必比练过的靠前）。
+   */
+  async onPickCurrent(e) {
+    const id = Number(e.currentTarget.dataset.id);
+    if (!id) return;
+
+    wx.showLoading({ title: '保存中', mask: true });
+    try {
+      const res = await api.setCurrentLesson(id);
+      const user = {
+        ...(getUser() || {}),
+        textbookId: Number(res.textbookId),
+        lessonProgress: Number(res.lessonProgress),
+      };
+      setUser(user);
+      app.globalData.user = user;
+      wx.hideLoading();
+      this.setData({ showPicker: false });
+      await this.load();
+      wx.showToast({ title: `已设为第 ${res.seq} 课`, icon: 'none' });
+    } catch (err) {
+      wx.hideLoading();
+    }
   },
 });

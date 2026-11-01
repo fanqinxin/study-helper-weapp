@@ -28,6 +28,8 @@ module.exports = {
   getTextbookStatus: (textbookId) => http.get(`/textbook/${textbookId}/status`),
   /** 课文详情（含练习题，不含答案） */
   getLesson: (lessonId) => http.get(`/lesson/${lessonId}`),
+  /** 设置「当前学到哪一课」（不扣额度，允许往回调） */
+  setCurrentLesson: (lessonId) => http.post(`/lesson/${lessonId}/current`),
   /** 按课文生成同步练习（消耗 1 次额度，异步入队） */
   generatePractice: (lessonId, count) => http.post(`/lesson/${lessonId}/practice`, { count }),
   /** 练习生成进度（轮询） */

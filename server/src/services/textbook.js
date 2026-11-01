@@ -460,12 +460,58 @@ async function submitLesson(uid, lessonId, answers = []) {
   return { lessonId, total, correct, score, detail };
 }
 
+/**
+ * 设置「当前学到哪一课」
+ *
+ * lesson_progress 存的是「已学到的课序号」，列表据此算：
+ *   passed  = seq <= progress
+ *   current = seq === progress + 1
+ * 所以选中第 N 课要把 progress 设成 N-1，这一课才会成为「当前」。
+ *
+ * 与 submitLesson 的 GREATEST 不同，这里**允许往回调**：
+ * 孩子说这学期学到第 3 课，就该是第 3 课，不能被之前练过的进度顶回去。
+ */
+async function setCurrentLesson(uid, lessonId) {
+  const id = toInt(lessonId, { min: 1 });
+  if (id === undefined) {
+    const e = new Error('课文 ID 不合法');
+    e.code = 4000;
+    throw e;
+  }
+
+  const rows = await db.query(
+    `SELECT l.id, l.seq, l.textbook_id AS textbookId
+       FROM lesson l JOIN textbook t ON t.id = l.textbook_id
+      WHERE l.id = ? AND (t.is_custom = 0 OR t.owner_uid = ?)`,
+    [id, uid]
+  );
+  if (!rows.length) {
+    const e = new Error('课文不存在');
+    e.code = 4040;
+    throw e;
+  }
+
+  const seq = Number(rows[0].seq) || 1;
+  const progress = Math.max(0, seq - 1);
+  const textbookId = Number(rows[0].textbookId);
+
+  // 课文可能属于另一本教材（不同学科），当前教材一起切过去，避免「当前课不在当前书里」
+  await db.query(
+    'UPDATE user SET lesson_progress = ?, textbook_id = ? WHERE id = ?',
+    [progress, textbookId, uid]
+  );
+
+  logger.info({ uid, lessonId: id, seq, progress }, '用户调整当前课文');
+  return { lessonId: id, seq, lessonProgress: progress, textbookId };
+}
+
 module.exports = {
   STATUS,
   TEXTBOOK_QUEUE,
   listTextbook,
   listLesson,
   selectTextbook,
+  setCurrentLesson,
   renameCustomTextbook,
   deleteCustomTextbook,
   createCustomTextbook,

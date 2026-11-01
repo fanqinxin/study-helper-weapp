@@ -113,6 +113,21 @@ router.get(
 );
 
 /**
+ * 设置「当前学到哪一课」
+ *
+ * 只改 user.lesson_progress（允许往回调），不扣额度、不触发 AI。
+ */
+router.post(
+  '/lesson/:id/current',
+  auth,
+  wrap(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return fail(res, CODES.BAD_REQUEST, '课文 ID 不合法');
+    ok(res, await textbookService.setCurrentLesson(req.uid, id));
+  })
+);
+
+/**
  * 生成课后练习（自定义教材没有题库时用）
  *
  * 同样是一次长耗时 AI 调用：入队后立即返回，前端轮询 status。

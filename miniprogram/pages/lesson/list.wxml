@@ -49,7 +49,12 @@
 
       <!-- 推荐下一课 -->
       <view class="next" wx:if="{{nextLesson}}">
-        <view class="next__label">接着课本往下学</view>
+        <view class="next__head">
+          <view class="next__label">接着课本往下学</view>
+          <view class="next__adjust" hover-class="next__adjust--active" bindtap="onOpenPicker">
+            学到第几课？
+          </view>
+        </view>
         <view class="next__title">第{{nextLesson.seq}}课 · {{nextLesson.title}}</view>
         <view class="next__desc" wx:if="{{nextLesson.knowledgePoints.length}}">
           知识点：{{nextLesson.knowledgePoints[0]}}
@@ -59,6 +64,17 @@
           <image class="next__btn-icon" src="{{iconPlay}}" mode="aspectFit" />
           <text>开始练习</text>
         </view>
+      </view>
+
+      <!-- 全部练完：仍要能调整进度 -->
+      <view class="next next--done" wx:elif="{{textbook}}">
+        <view class="next__head">
+          <view class="next__label">本册课文都练完了</view>
+          <view class="next__adjust" hover-class="next__adjust--active" bindtap="onOpenPicker">
+            学到第几课？
+          </view>
+        </view>
+        <view class="next__desc">想复习哪一课，进下面的列表点一下就行</view>
       </view>
 
       <!-- 全部课文 -->
@@ -81,7 +97,7 @@
                 {{item.knowledgePoints[0]}}
               </view>
             </view>
-            <view class="lesson__state" wx:if="{{item.passed}}">已练</view>
+            <view class="lesson__state" wx:if="{{item.passed}}">已学</view>
             <view class="lesson__state lesson__state--current" wx:elif="{{item.current}}">当前</view>
           </view>
         </view>
@@ -89,6 +105,35 @@
 
     </block>
 
+  </view>
+
+  <!-- ============ 选择「当前学到哪一课」 ============ -->
+  <view class="sheet-mask" wx:if="{{showPicker}}" bindtap="onClosePicker"></view>
+
+  <view class="sheet" wx:if="{{showPicker}}">
+    <view class="sheet__bar">
+      <view class="sheet__title">你现在学到哪一课？</view>
+      <view class="sheet__close" hover-class="sheet__close--active" bindtap="onClosePicker">关闭</view>
+    </view>
+    <view class="sheet__tip">选中的课会成为「当前」，它前面的课记为已学</view>
+
+    <scroll-view class="sheet__body" scroll-y>
+      <view class="sheet__group" wx:for="{{groups}}" wx:for-item="g" wx:key="unit">
+        <view class="sheet__unit">{{g.unit}}</view>
+        <view
+          wx:for="{{g.list}}"
+          wx:key="id"
+          class="sheet__row {{item.current ? 'sheet__row--on' : ''}}"
+          hover-class="sheet__row--hover"
+          data-id="{{item.id}}"
+          bindtap="onPickCurrent"
+        >
+          <view class="sheet__seq">第{{item.seq}}课</view>
+          <view class="sheet__name">{{item.title}}</view>
+          <view class="sheet__tag" wx:if="{{item.current}}">当前</view>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 
   <tab-bar current="{{1}}" />
