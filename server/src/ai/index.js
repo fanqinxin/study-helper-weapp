@@ -221,8 +221,7 @@ async function gradeHomework(imageUrls, ctx = {}) {
 /**
  * 识别课本目录 → 课文结构（用于自定义教材）
  */
-async function recognizeCatalog(imageUrls) {
-  const provider = getProvider();
+async function recognizeCatalog(imageUrls) {  const provider = getProvider();
   const prompt = `请识别图片中的课本目录页，提取课文结构。
 
 要求：只输出 JSON 数组，不要解释、不要 markdown 代码块。
@@ -246,12 +245,86 @@ async function recognizeCatalog(imageUrls) {
     }));
 }
 
+// ============================================================
+// 第三步（可选）：按课文出同步练习
+// ============================================================
+
+function buildPracticePrompt({ subject, grade, unit, title, count }) {
+  const subjectName = SUBJECT_NAME[subject] || '语文';
+  const unitText = unit ? `所属单元：${unit}。` : '';
+  return `你是小学${subjectName}教研老师，请围绕${grade}年级课文《${title}》出一套同步练习。${unitText}
+
+要求：
+1. 共 ${count} 道题，全部为单选题，每题 4 个选项
+2. 考查课文主题、常见字词与理解，符合${grade}年级水平，不要超纲
+3. answer 必须是 options 中某一项的原文，不能写"A""B"或改写
+4. analysis 用小学生能听懂的话讲清为什么，60 字内
+5. difficulty：1=简单 2=中等 3=稍难
+6. 只输出 JSON 数组，不要解释文字、不要 markdown 代码块
+
+输出格式：
+[
+  { "stem": "题干", "options": ["选项一", "选项二", "选项三", "选项四"], "answer": "正确选项原文", "analysis": "讲解", "difficulty": 2 }
+]`;
+}
+
+/**
+ * 按课文生成同步练习（文本模型）
+ *
+ * 只用于「没有题库的课文」，比如用户拍目录生成的自定义教材。
+ * 生成的题目必须自校验：answer 一定要能在 options 里原样找到，
+ * 否则练习页会永远判错。
+ */
+async function generatePractice({ subject, grade, unit, title, count = 4 }) {
+  const provider = getProvider();
+  const prompt = buildPracticePrompt({ subject, grade, unit, title, count });
+
+  const raw = await provider.chatText(prompt, {
+    system: '你是严谨的小学教研老师，只输出 JSON 数组，不编造超纲内容。',
+    temperature: 0.6,
+  });
+
+  const parsed = BaseProvider.extractJson(raw);
+  if (!Array.isArray(parsed) || !parsed.length) {
+    throw new Error('生成结果无法解析为题目数组');
+  }
+
+  const cleaned = parsed
+    .map((q) => {
+      const options = Array.isArray(q && q.options)
+        ? q.options.map((o) => String(o == null ? '' : o).trim()).filter(Boolean)
+        : [];
+      const answer = String((q && q.answer) || '').trim();
+      const stem = String((q && q.stem) || '').trim();
+      if (!stem || options.length < 2) return null;
+      // 答案必须与某个选项完全一致，否则判分永远对不上
+      const hit = options.find((o) => o === answer);
+      if (!hit) return null;
+      return {
+        type: 1,
+        stem,
+        options,
+        answer: hit,
+        analysis: q.analysis ? String(q.analysis).trim() : null,
+        difficulty: Math.min(3, Math.max(1, Number(q.difficulty) || 2)),
+      };
+    })
+    .filter(Boolean)
+    .slice(0, count);
+
+  if (!cleaned.length) {
+    throw new Error('模型没有给出可用的题目，请稍后重试');
+  }
+  return cleaned;
+}
+
 module.exports = {
   getProvider,
   recognize,
   judge,
   gradeHomework,
   recognizeCatalog,
+  generatePractice,
   toAbsoluteUrls,
   SUBJECT_NAME,
 };

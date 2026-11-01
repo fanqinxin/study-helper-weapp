@@ -69,6 +69,16 @@
           </view>
         </view>
 
+        <!-- 自定义教材才可重命名 / 删除 -->
+        <view
+          wx:if="{{item.isCustom}}"
+          class="book__more"
+          hover-class="book__more--active"
+          catchtap="onMore"
+          data-id="{{item.id}}"
+          data-name="{{item.name}}"
+        >⋯</view>
+
         <view class="book__check" wx:if="{{item.active}}">使用中</view>
         <view class="book__arrow" wx:else></view>
       </view>

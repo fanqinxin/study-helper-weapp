@@ -3,6 +3,7 @@
  */
 const express = require('express');
 const textbookService = require('../services/textbook');
+const practiceService = require('../services/practice');
 const { auth } = require('../middlewares/auth');
 const { ok, wrap, CODES, fail } = require('../utils/response');
 const { rateLimit } = require('../utils/redis');
@@ -65,6 +66,30 @@ router.get(
   wrap(async (req, res) => ok(res, await textbookService.getCustomStatus(req.uid, req.params.id)))
 );
 
+/**
+ * 重命名自定义教材
+ */
+router.patch(
+  '/textbook/:id',
+  auth,
+  wrap(async (req, res) => {
+    const { name } = req.body || {};
+    ok(res, await textbookService.renameCustomTextbook(req.uid, req.params.id, name));
+  })
+);
+
+/**
+ * 删除自定义教材
+ * 内置教材不允许删除（由运营维护）
+ */
+router.delete(
+  '/textbook/:id',
+  auth,
+  wrap(async (req, res) => {
+    ok(res, await textbookService.deleteCustomTextbook(req.uid, req.params.id));
+  })
+);
+
 /** 某本教材的课文列表（放在 /textbook/:id/lessons） */
 router.get(
   '/textbook/:id/lessons',
@@ -84,6 +109,34 @@ router.get(
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) return fail(res, CODES.BAD_REQUEST, '课文 ID 不合法');
     ok(res, await textbookService.getLesson(req.uid, id));
+  })
+);
+
+/**
+ * 生成课后练习（自定义教材没有题库时用）
+ *
+ * 同样是一次长耗时 AI 调用：入队后立即返回，前端轮询 status。
+ * 每次消耗 1 次额度，失败由 worker 自动退还；限流防连点。
+ */
+router.post(
+  '/lesson/:id/practice',
+  auth,
+  wrap(async (req, res, next) => {
+    const allow = await rateLimit(`lesson_practice:${req.uid}`, 3, 60);
+    if (!allow) return fail(res, CODES.RATE_LIMITED, '生成过于频繁，请稍后再试');
+    next();
+  }),
+  wrap(async (req, res) => {
+    ok(res, await practiceService.createPractice(req.uid, req.params.id));
+  })
+);
+
+/** 练习生成进度（前端轮询） */
+router.get(
+  '/lesson/:id/practice/status',
+  auth,
+  wrap(async (req, res) => {
+    ok(res, await practiceService.getPracticeStatus(req.uid, req.params.id));
   })
 );
 

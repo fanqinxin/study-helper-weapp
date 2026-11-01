@@ -34,10 +34,15 @@ Page({
     iconCamera: '',
   },
 
-  onLoad() {
+  onLoad(options) {
+    const subject = Number(options && options.subject);
+    const grade = Number(options && options.grade);
     this.setData({
       theme: app.globalData.theme || 'light',
       iconCamera: getIcon('camera', '#FFC857', 40),
+      // 从课文页/教材中心带过来的学科年级，省得再选一次
+      subject: subject >= 1 && subject <= 3 ? subject : this.data.subject,
+      grade: grade >= 1 && grade <= 6 ? grade : this.data.grade,
     });
     this.loadQuota();
   },

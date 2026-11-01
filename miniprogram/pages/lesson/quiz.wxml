@@ -3,15 +3,27 @@
 
   <skeleton wx:if="{{loading}}" rows="{{3}}" />
 
-  <empty-state
-    wx:elif="{{!lesson || !total}}"
-    icon="lesson"
-    color="#6BB6E0"
-    text="这一课还没有练习题"
-    desc="换一课试试，或者稍后再来看看"
-    action="返回课文列表"
-    bind:action="onBackToList"
-  />
+  <block wx:elif="{{!lesson || !total}}">
+    <empty-state
+      icon="lesson"
+      color="#6BB6E0"
+      text="这一课还没有练习题"
+      desc="{{isCustom ? '自定义教材只识别了课文目录。可以让 AI 按这篇课文出一套同步练习。' : '换一课试试，或者用 AI 现出一套。'}}"
+    />
+
+    <view class="gen">
+      <view
+        class="gen__btn {{generating ? 'gen__btn--busy' : ''}}"
+        hover-class="gen__btn--active"
+        bindtap="onGenerate"
+      >
+        {{generating ? 'AI 出题中 ' + genSeconds + 's…' : '让 AI 出这一课的练习（1 次额度）'}}
+      </view>
+
+      <view class="gen__tip">生成完成后自动刷新；失败会自动退还额度</view>
+      <view class="gen__back" hover-class="gen__back--active" bindtap="onBackToList">返回课文列表</view>
+    </view>
+  </block>
 
   <view wx:elif="{{!submitted}}" class="page__content">
 

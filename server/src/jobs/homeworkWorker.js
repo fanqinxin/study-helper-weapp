@@ -12,11 +12,13 @@
 const db = require('../models/db');
 const homeworkService = require('../services/homework');
 const textbookService = require('../services/textbook');
+const practiceService = require('../services/practice');
 const { redis } = require('../utils/redis');
 const logger = require('../utils/logger');
 
 const QUEUE_KEY = 'queue:homework:analyze';
 const QUEUE_TEXTBOOK = textbookService.TEXTBOOK_QUEUE;
+const QUEUE_PRACTICE = practiceService.PRACTICE_QUEUE;
 const BLOCK_SECONDS = 5;
 
 let running = true;
@@ -25,12 +27,12 @@ let running = true;
  * 生产建议换成 bullmq；这里用最朴素的 LPUSH/BRPOP 队列，
  * 好处是零额外依赖，逻辑一目了然，方便早期调试。
  *
- * 同一个 worker 消费两类任务：批改、教材目录识别。
- * 二者都是"长耗时 AI 调用"，共用一套消费循环，避免再起一个容器。
+ * 同一个 worker 消费三类任务：批改、教材目录识别、课后练习生成。
+ * 它们都是"长耗时 AI 调用"，共用一套消费循环，避免再起容器。
  */
 async function consumeOnce() {
   // BRPOP 阻塞等待，超时返回 null，避免空转
-  const res = await redis.brpop(QUEUE_KEY, QUEUE_TEXTBOOK, BLOCK_SECONDS);
+  const res = await redis.brpop(QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE, BLOCK_SECONDS);
   if (!res) return false;
 
   const [key, payload] = res;
@@ -54,6 +56,18 @@ async function consumeOnce() {
     return true;
   }
 
+  if (key === QUEUE_PRACTICE) {
+    const lessonId = Number(msg.lessonId);
+    if (!lessonId) return true;
+    try {
+      await practiceService.runGeneratePractice(lessonId, Number(msg.uid), msg.refId);
+    } catch (e) {
+      // runGeneratePractice 内部已处理失败与退款，这里只兜底记录
+      logger.error({ err: e.message, lessonId }, 'worker 处理练习生成异常');
+    }
+    return true;
+  }
+
   const homeworkId = Number(msg.homeworkId);
   if (!homeworkId) return true;
 
@@ -67,7 +81,7 @@ async function consumeOnce() {
 }
 
 async function main() {
-  logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK] }, '任务 Worker 已启动');
+  logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE] }, '任务 Worker 已启动');
 
   try {
     await db.ping();

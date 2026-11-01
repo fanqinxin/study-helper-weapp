@@ -147,6 +147,7 @@ const http = {
   get: (url, data, opts = {}) => request({ url, method: 'GET', data, ...opts }),
   post: (url, data, opts = {}) => request({ url, method: 'POST', data, ...opts }),
   put: (url, data, opts = {}) => request({ url, method: 'PUT', data, ...opts }),
+  patch: (url, data, opts = {}) => request({ url, method: 'PATCH', data, ...opts }),
   del: (url, data, opts = {}) => request({ url, method: 'DELETE', data, ...opts }),
 };
 

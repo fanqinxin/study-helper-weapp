@@ -1,15 +1,30 @@
 <view class="page page--with-tabbar theme-{{theme}}">
-  <nav-bar mode="plain" />
+  <nav-bar mode="title" title="课文同步学" />
 
   <view class="page__content">
+
+    <!-- ============ 学科切换 ============ -->
+    <view class="subjects">
+      <view
+        wx:for="{{subjects}}"
+        wx:key="value"
+        class="subject {{subject === item.value ? 'subject--active' : ''}} {{item.available ? '' : 'subject--empty'}}"
+        hover-class="subject--hover"
+        data-value="{{item.value}}"
+        data-name="{{item.name}}"
+        bindtap="onSubjectTap"
+      >
+        {{item.name}}
+      </view>
+    </view>
 
     <!-- ============ 页头 ============ -->
     <view class="head">
       <view class="head__left">
-        <view class="head__title">课文同步练习</view>
         <view class="head__sub" wx:if="{{textbook}}">
           {{textbook.grade}}年级 · {{textbook.name}}
         </view>
+        <view class="head__sub" wx:else>还没有选择教材，先选一本正在用的课本</view>
       </view>
       <view class="head__switch" hover-class="head__switch--active" bindtap="onSwitchTextbook">
         切换教材

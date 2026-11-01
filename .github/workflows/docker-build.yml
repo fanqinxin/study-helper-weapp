@@ -110,6 +110,13 @@ jobs:
           cd server
           node scripts/selftest-textbook.js
 
+      # 课后练习生成同样是「先扣费再入队」的异步任务：
+      # 连点不能重复扣费、入队失败要退款、失败要清标记，否则用户永远卡在生成中。
+      - name: 课后练习自测
+        run: |
+          cd server
+          node scripts/selftest-practice.js
+
       - name: 校验 docker-compose.yml 结构
         run: |
           node -e "

@@ -27,11 +27,13 @@ Page({
     textbooks: [],
   },
 
-  onLoad() {
+  onLoad(options) {
     const user = getUser() || {};
+    const subject = Number(options && options.subject);
     this.setData({
       theme: app.globalData.theme || 'light',
       currentId: user.textbookId || null,
+      subject: subject >= 1 && subject <= 3 ? subject : 1,
       grade: user.grade || 3,
     });
     this.load();
@@ -100,6 +102,81 @@ Page({
 
   /** 去添加自定义教材 */
   onAddCustom() {
-    wx.navigateTo({ url: '/pages/textbook/add' });
+    const subject = Number(this.data.subject) || 1;
+    const grade = Number(this.data.grade) || 3;
+    wx.navigateTo({ url: `/pages/textbook/add?subject=${subject}&grade=${grade}` });
+  },
+
+  /** 自定义教材的管理入口（内置教材不显示） */
+  onMore(e) {
+    const { id, name } = e.currentTarget.dataset;
+    wx.showActionSheet({
+      itemList: ['重命名', '删除这本教材'],
+      success: (r) => {
+        if (r.tapIndex === 0) this.renameBook(Number(id), name);
+        if (r.tapIndex === 1) this.deleteBook(Number(id), name);
+      },
+    });
+  },
+
+  /** 重命名 */
+  renameBook(id, oldName) {
+    wx.showModal({
+      title: '重命名教材',
+      editable: true,
+      placeholderText: '例如：人教版语文三上',
+      content: oldName || '',
+      success: async (r) => {
+        if (!r.confirm) return;
+        const name = String(r.content || '').trim();
+        if (!name) {
+          wx.showToast({ title: '名称不能为空', icon: 'none' });
+          return;
+        }
+        if (name === oldName) return;
+
+        wx.showLoading({ title: '保存中', mask: true });
+        try {
+          await api.renameTextbook(id, name);
+          wx.hideLoading();
+          wx.showToast({ title: '已重命名', icon: 'success' });
+          this.load();
+        } catch (err) {
+          wx.hideLoading();
+        }
+      },
+    });
+  },
+
+  /** 删除：课文与练习会一并清除，且不可恢复 */
+  deleteBook(id) {
+    wx.showModal({
+      title: '删除这本教材',
+      content: '课文和练习会一并删除，且不可恢复。确定删除吗？',
+      confirmText: '删除',
+      confirmColor: '#E06C5A',
+      success: async (r) => {
+        if (!r.confirm) return;
+
+        wx.showLoading({ title: '删除中', mask: true });
+        try {
+          await api.deleteTextbook(id);
+          wx.hideLoading();
+
+          // 删的是当前在用的教材：本地登录态也要同步解绑，否则会跳进空列表
+          if (Number(id) === Number(this.data.currentId)) {
+            const user = { ...(getUser() || {}), textbookId: null, lessonProgress: 0 };
+            setUser(user);
+            app.globalData.user = user;
+            this.setData({ currentId: null });
+          }
+
+          wx.showToast({ title: '已删除', icon: 'success' });
+          this.load();
+        } catch (err) {
+          wx.hideLoading();
+        }
+      },
+    });
   },
 });

@@ -6,7 +6,7 @@
  * 不需要自己去列表里找，这是同步练习体验的关键。
  */
 const api = require('../../utils/api');
-const { getUser } = require('../../utils/auth');
+const { getUser, setUser } = require('../../utils/auth');
 const { getIcon } = require('../../styles/icons');
 const { SUBJECT_NAME } = require('../../utils/constants');
 const app = getApp();
@@ -26,6 +26,10 @@ Page({
     /** 左侧单元聚合（按 unit 分组） */
     groups: [],
     iconPlay: '',
+    /** 当前学科 */
+    subject: 1,
+    /** 三个学科及是否有可用教材 */
+    subjects: [],
   },
 
   onLoad() {
@@ -37,7 +41,9 @@ Page({
   },
 
   onShow() {
-    if (!this.data.loading && this.data.textbook) this.load();
+    // 从教材中心 / 添加教材返回时都要刷新：
+    // 之前只在「已选教材」时刷新，选完教材回来仍是空态
+    if (!this.data.loading) this.load();
   },
 
   onPullDownRefresh() {
@@ -53,12 +59,29 @@ Page({
 
   async load() {
     const user = getUser();
+    this.setData({ loading: true });
+
+    // 先取"可选教材"，用来判断哪些学科能直接切换
+    let all = [];
+    try {
+      const res = await api.listTextbook({});
+      all = res.list || [];
+    } catch (e) {
+      all = [];
+    }
+    this._textbooks = all;
+
+    const subjects = [1, 2, 3].map((v) => ({
+      value: v,
+      name: SUBJECT_NAME[v],
+      available: all.some((t) => Number(t.subject) === v),
+    }));
+
     if (!user || !user.textbookId) {
-      this.setData({ loading: false, textbook: null });
+      this.setData({ loading: false, textbook: null, lessons: [], groups: [], nextLesson: null, subjects });
       return;
     }
 
-    this.setData({ loading: true });
     try {
       const res = await api.listLesson(user.textbookId);
       const lessons = (res.lessons || []).map((l) => ({
@@ -82,13 +105,65 @@ Page({
       this.setData({
         loading: false,
         textbook: res.textbook,
+        subject: Number(res.textbook.subject) || this.data.subject,
+        subjects,
         lessons,
         groups,
         progress,
         nextLesson,
       });
     } catch (e) {
-      this.setData({ loading: false });
+      this.setData({ loading: false, subjects });
+    }
+  },
+
+  /**
+   * 切换学科
+   *
+   * 一个学科可能有多本教材（上下册 / 多个版本），
+   * 只有一本就直接切；多本交给教材中心挑；一本都没有就引导去拍目录。
+   */
+  async onSubjectTap(e) {
+    const { value, name } = e.currentTarget.dataset;
+    const subject = Number(value);
+    if (subject === Number(this.data.subject)) return;
+
+    const list = (this._textbooks || []).filter((t) => Number(t.subject) === subject);
+
+    if (!list.length) {
+      wx.showModal({
+        title: `还没有${name || ''}教材`,
+        content: '可以拍下课本目录，AI 会整理成你的专属练习册。',
+        confirmText: '去添加',
+        cancelText: '再看看',
+        success: (r) => {
+          if (r.confirm) wx.navigateTo({ url: `/pages/textbook/add?subject=${subject}` });
+        },
+      });
+      return;
+    }
+
+    if (list.length > 1) {
+      wx.navigateTo({ url: `/pages/textbook/center?subject=${subject}` });
+      return;
+    }
+
+    const target = list[0];
+    wx.showLoading({ title: '切换中', mask: true });
+    try {
+      await api.selectTextbook({ textbookId: Number(target.id) });
+      const user = {
+        ...(getUser() || {}),
+        textbookId: Number(target.id),
+        grade: Number(target.grade),
+        lessonProgress: 0,
+      };
+      setUser(user);
+      app.globalData.user = user;
+      wx.hideLoading();
+      await this.load();
+    } catch (err) {
+      wx.hideLoading();
     }
   },
 
@@ -107,8 +182,9 @@ Page({
     wx.navigateTo({ url: `/pages/lesson/quiz?id=${id}` });
   },
 
-  /** 去教材中心换教材 */
+  /** 去教材中心换教材（带上当前学科，少点一次） */
   onSwitchTextbook() {
-    wx.navigateTo({ url: '/pages/textbook/center' });
+    const subject = Number(this.data.subject) || 1;
+    wx.navigateTo({ url: `/pages/textbook/center?subject=${subject}` });
   },
 });

@@ -111,6 +111,90 @@ async function selectTextbook(uid, { textbookId, lessonProgress = 0 }) {
 }
 
 /**
+ * 取出「属于本人」的自定义教材，否则抛业务错误
+ *
+ * 内置教材（is_custom=0）由运营维护，用户既不能改名也不能删除，
+ * 否则会把别人的课文一起改掉。
+ */
+async function assertOwnCustomTextbook(uid, textbookId) {
+  const id = toInt(textbookId, { min: 1 });
+  if (id === undefined) {
+    const e = new Error('教材 ID 不合法');
+    e.code = 4000;
+    throw e;
+  }
+
+  const rows = await db.query(
+    'SELECT id, name, is_custom AS isCustom, owner_uid AS ownerUid FROM textbook WHERE id = ?',
+    [id]
+  );
+  if (!rows.length) {
+    const e = new Error('教材不存在');
+    e.code = 4040;
+    throw e;
+  }
+
+  const tb = rows[0];
+  if (!Number(tb.isCustom) || Number(tb.ownerUid) !== Number(uid)) {
+    const e = new Error('内置教材不能修改或删除');
+    e.code = 4000;
+    throw e;
+  }
+  return { id, name: tb.name };
+}
+
+/** 重命名自定义教材 */
+async function renameCustomTextbook(uid, textbookId, name) {
+  const tb = await assertOwnCustomTextbook(uid, textbookId);
+  const newName = String(name == null ? '' : name).trim();
+
+  if (!newName) {
+    const e = new Error('教材名称不能为空');
+    e.code = 4000;
+    throw e;
+  }
+  if (newName.length > 20) {
+    const e = new Error('教材名称最多 20 个字');
+    e.code = 4000;
+    throw e;
+  }
+
+  await db.query('UPDATE textbook SET name = ? WHERE id = ? AND owner_uid = ?', [
+    newName,
+    tb.id,
+    uid,
+  ]);
+  logger.info({ uid, textbookId: tb.id, from: tb.name, to: newName }, '自定义教材重命名');
+  return { textbookId: tb.id, name: newName };
+}
+
+/**
+ * 删除自定义教材
+ *
+ * 表和表之间没有外键，删除必须自己按依赖顺序清理：
+ * question → lesson → textbook，同时把指向它的用户解绑，
+ * 否则孩子会停在一个"教材已不存在"的空列表里。
+ */
+async function deleteCustomTextbook(uid, textbookId) {
+  const tb = await assertOwnCustomTextbook(uid, textbookId);
+
+  await db.transaction(async (conn) => {
+    await conn.query('UPDATE user SET textbook_id = NULL, lesson_progress = 0 WHERE textbook_id = ?', [
+      tb.id,
+    ]);
+    await conn.query(
+      'DELETE q FROM question q JOIN lesson l ON l.id = q.lesson_id WHERE l.textbook_id = ?',
+      [tb.id]
+    );
+    await conn.query('DELETE FROM lesson WHERE textbook_id = ?', [tb.id]);
+    await conn.query('DELETE FROM textbook WHERE id = ? AND owner_uid = ?', [tb.id, uid]);
+  });
+
+  logger.info({ uid, textbookId: tb.id, name: tb.name }, '自定义教材已删除');
+  return { textbookId: tb.id, deleted: true };
+}
+
+/**
  * 上传自定义教材：建记录 → 投递识别任务 → 立即返回
  *
  * 为什么是异步：
@@ -275,7 +359,8 @@ async function getCustomStatus(uid, textbookId) {
 /** 课文详情（含题目） */
 async function getLesson(uid, lessonId) {
   const rows = await db.query(
-    `SELECT l.*, t.name AS textbookName, t.subject, t.grade
+    `SELECT l.*, t.name AS textbookName, t.subject, t.grade,
+            t.is_custom AS textbookIsCustom
        FROM lesson l JOIN textbook t ON t.id = l.textbook_id
       WHERE l.id = ? AND (t.is_custom = 0 OR t.owner_uid = ?)`,
     [lessonId, uid]
@@ -299,6 +384,8 @@ async function getLesson(uid, lessonId) {
     title: l.title,
     unit: l.unit,
     textbookName: l.textbookName,
+    /** 自定义教材只有课文结构，题目需要按需生成 */
+    isCustom: !!Number(l.textbookIsCustom),
     subject: Number(l.subject),
     grade: Number(l.grade),
     knowledgePoints: l.knowledge_points
@@ -322,6 +409,18 @@ async function getLesson(uid, lessonId) {
  * 纯本地比对，不调 AI，所以不消耗额度。
  */
 async function submitLesson(uid, lessonId, answers = []) {
+  // 先校验归属：自定义教材只有本人能提交，否则会推进别人的进度
+  const own = await db.query(
+    `SELECT l.id FROM lesson l JOIN textbook t ON t.id = l.textbook_id
+      WHERE l.id = ? AND (t.is_custom = 0 OR t.owner_uid = ?)`,
+    [lessonId, uid]
+  );
+  if (!own.length) {
+    const e = new Error('课文不存在');
+    e.code = 4040;
+    throw e;
+  }
+
   const questions = await db.query(
     'SELECT id, answer, analysis FROM question WHERE lesson_id = ?',
     [lessonId]
@@ -367,6 +466,8 @@ module.exports = {
   listTextbook,
   listLesson,
   selectTextbook,
+  renameCustomTextbook,
+  deleteCustomTextbook,
   createCustomTextbook,
   runRecognize,
   getCustomStatus,

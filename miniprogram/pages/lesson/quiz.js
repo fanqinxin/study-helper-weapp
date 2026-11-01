@@ -33,6 +33,12 @@ Page({
     letters: ['A', 'B', 'C', 'D'],
     progressPercent: 0,
     iconCheck: '',
+    /** 是否来自自定义教材（决定空态文案） */
+    isCustom: false,
+    /** 正在让 AI 出题 */
+    generating: false,
+    /** 出题已等待秒数 */
+    genSeconds: 0,
   },
 
   onLoad(options) {
@@ -57,6 +63,7 @@ Page({
       this.setData({
         loading: false,
         lesson,
+        isCustom: !!lesson.isCustom,
         total,
         index: 0,
         question: total ? lesson.questions[0] : null,
@@ -67,6 +74,90 @@ Page({
     } catch (e) {
       this.setData({ loading: false });
     }
+  },
+
+  onUnload() {
+    this.stopGenerate();
+  },
+
+  /**
+   * 让 AI 出这一课的练习
+   *
+   * 与教材识别同一套模式：入队立即返回，前端轮询。
+   * 之所以不在这里同步等，是因为出题要 10-30 秒，
+   * 而 wx.request 默认 30 秒就断，一定先撞客户端超时。
+   */
+  async onGenerate() {
+    if (this.data.generating) return;
+
+    this.setData({ generating: true, genSeconds: 0 });
+    this._genTick = setInterval(() => {
+      this.setData({ genSeconds: this.data.genSeconds + 1 });
+    }, 1000);
+
+    try {
+      const res = await api.generatePractice(this.data.lessonId);
+      if (res && res.status === 'ready') {
+        this.finishGenerate(true);
+        return;
+      }
+      this.pollPractice();
+    } catch (e) {
+      // request 层已提示；额度不足会跳拦截页
+      this.finishGenerate(false, e && e.silent ? '' : (e && e.msg) || '');
+    }
+  },
+
+  /** 轮询出题结果，最多等 90 秒 */
+  pollPractice() {
+    const startedAt = Date.now();
+
+    const tick = async () => {
+      if (!this.data.generating) return;
+
+      if (Date.now() - startedAt > 90000) {
+        this.finishGenerate(false, '生成时间有点久，稍后回来看看');
+        return;
+      }
+
+      try {
+        const st = await api.getPracticeStatus(this.data.lessonId);
+        if (st.status === 'ready') {
+          this.finishGenerate(true);
+          return;
+        }
+        if (st.status === 'none') {
+          // 没有题目也没有生成中标记：任务失败，服务端已退款
+          this.finishGenerate(false, '这次没生成成功，额度已退还');
+          return;
+        }
+      } catch (e) {
+        // 单次失败不终止，下一轮继续
+      }
+
+      this._genPoll = setTimeout(tick, 3000);
+    };
+
+    this._genPoll = setTimeout(tick, 2000);
+  },
+
+  stopGenerate() {
+    if (this._genTick) clearInterval(this._genTick);
+    if (this._genPoll) clearTimeout(this._genPoll);
+    this._genTick = null;
+    this._genPoll = null;
+  },
+
+  finishGenerate(ok, msg) {
+    this.stopGenerate();
+    this.setData({ generating: false });
+    if (ok) {
+      wx.showToast({ title: '练习已生成', icon: 'success' });
+      if (app.refreshQuota) app.refreshQuota();
+      this.load(this.data.lessonId);
+      return;
+    }
+    if (msg) wx.showToast({ title: msg, icon: 'none' });
   },
 
   /** 单选题选择 */
@@ -189,7 +280,11 @@ Page({
 
   /** 结果页：回课文列表 */
   onBackToList() {
-    wx.navigateBack();
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack();
+      return;
+    }
+    wx.switchTab({ url: '/pages/lesson/list' });
   },
 
   /** 结果页：去错题本 */
