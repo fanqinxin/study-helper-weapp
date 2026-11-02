@@ -509,12 +509,61 @@ async function generatePractice({ subject, grade, unit, title, count = 5 }) {
   return pool.slice(0, total);
 }
 
+/**
+ * 识别老师布置的作业截图 → 按学科生成任务清单
+ *
+ * 输入是班级群作业通知的截图（可能含寒暄、表情、接龙），
+ * 要求模型只保留可执行的作业事项，保留页码/遍数/日期等关键要求。
+ * @returns {{ title, note, groups: Array<{subject:number, items:string[]}> }}
+ */
+async function recognizeAssignment(imageUrls) {
+  const provider = getProvider();
+  const prompt = `请从这些图片中提取老师布置的作业，整理成打卡任务清单。图片可能是班级群聊天截图、作业通知或黑板作业。
+
+要求：
+1. 按学科分组：subject 填 1=语文 2=数学 3=英语 0=通用（跳绳、劳动、整理书包等非学科任务）4=其他学科
+2. 每个任务是一条简短、可独立完成并打勾的指令，必须保留老师的关键要求（页码、第几课、遍数、朗读/背诵/抄写方式、截止日期）
+3. 同一件事拆成多个动作时合并为一条；不要把"预习+复习"混成一条看不清的长句
+4. 忽略与作业无关的内容：寒暄、表情包、接龙、群通知里的非作业部分
+5. 只输出 JSON，不要解释文字、不要 markdown 代码块
+
+输出格式：
+{ "title": "如：10/28 作业", "note": "老师的重要提醒，没有则空字符串",
+  "groups": [ { "subject": 1, "items": ["任务一", "任务二"] } ] }`;
+
+  const raw = await provider.chatVision(toAbsoluteUrls(imageUrls), prompt);
+  const parsed = BaseProvider.extractJson(raw);
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('作业识别失败，请重新拍摄');
+  }
+
+  const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+  const groups = (Array.isArray(parsed.groups) ? parsed.groups : [])
+    .map((g) => ({
+      subject: [0, 1, 2, 3, 4].includes(Number(g && g.subject)) ? Number(g.subject) : 0,
+      items: (Array.isArray(g && g.items) ? g.items : [])
+        .map((it) => clip(it, 255))
+        .filter(Boolean),
+    }))
+    .filter((g) => g.items.length);
+
+  if (!groups.length) {
+    throw new Error('没有识别出作业任务，请确认拍的是作业内容');
+  }
+  return {
+    title: clip(parsed.title, 128) || null,
+    note: clip(parsed.note, 255) || null,
+    groups,
+  };
+}
+
 module.exports = {
   getProvider,
   recognize,
   judge,
   gradeHomework,
   recognizeCatalog,
+  recognizeAssignment,
   generatePractice,
   verifyPractice,
   toAbsoluteUrls,

@@ -2,8 +2,10 @@
  * 教材与课文路由
  */
 const express = require('express');
+const config = require('../config');
 const textbookService = require('../services/textbook');
 const practiceService = require('../services/practice');
+const { signPrintToken } = require('../utils/printToken');
 const { auth } = require('../middlewares/auth');
 const { ok, wrap, CODES, fail } = require('../utils/response');
 const { rateLimit } = require('../utils/redis');
@@ -133,6 +135,7 @@ router.post(
  * 同样是一次长耗时 AI 调用：入队后立即返回，前端轮询 status。
  * 每次消耗 1 次额度，失败由 worker 自动退还；限流防连点。
  * body.count：5 / 10 / 15 / 20（其它值由 service 回落默认档，不报错）
+ * body.force：true 时忽略已有题目重新生成（换一套题，覆盖旧题）
  */
 router.post(
   '/lesson/:id/practice',
@@ -143,7 +146,8 @@ router.post(
     next();
   }),
   wrap(async (req, res) => {
-    ok(res, await practiceService.createPractice(req.uid, req.params.id, req.body && req.body.count));
+    const body = req.body || {};
+    ok(res, await practiceService.createPractice(req.uid, req.params.id, body.count, !!body.force));
   })
 );
 
@@ -153,6 +157,31 @@ router.get(
   auth,
   wrap(async (req, res) => {
     ok(res, await practiceService.getPracticeStatus(req.uid, req.params.id));
+  })
+);
+
+/**
+ * 换取练习题打印链接
+ *
+ * 打印页在电脑浏览器打开（个人主体小程序不支持 web-view，无法内嵌），
+ * 返回带 HMAC 签名的 URL，7 天有效。不消耗额度。
+ */
+router.post(
+  '/lesson/:id/practice/print-url',
+  auth,
+  wrap(async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) return fail(res, CODES.BAD_REQUEST, '课文 ID 不合法');
+
+    // 校验归属：内置教材任何人可打，自定义教材仅限本人
+    const lesson = await textbookService.getLesson(req.uid, id);
+    if (!lesson.questions || !lesson.questions.length) {
+      return fail(res, CODES.BAD_REQUEST, '这一课还没有练习题');
+    }
+
+    const token = signPrintToken(req.uid, 'practice', id);
+    const base = config.upload.publicBaseUrl || `${req.protocol}://${req.get('host')}`;
+    ok(res, { url: `${base}/api/v1/print/practice/${id}?token=${token}` });
   })
 );
 

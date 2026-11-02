@@ -49,6 +49,8 @@ Page({
      * 结果恒为假，按钮会一直是浅色。
      */
     canNext: false,
+    /** 「换一套题」面板 */
+    regenPanel: false,
   },
 
   onLoad(options) {
@@ -107,15 +109,20 @@ Page({
    * 而 wx.request 默认 30 秒就断，一定先撞客户端超时。
    */
   async onGenerate() {
+    this.startGenerate(false);
+  },
+
+  /** 实际发起生成；force=true 表示换一套题（覆盖本课现有题目） */
+  async startGenerate(force) {
     if (this.data.generating) return;
 
-    this.setData({ generating: true, genSeconds: 0 });
+    this.setData({ generating: true, genSeconds: 0, regenPanel: false });
     this._genTick = setInterval(() => {
       this.setData({ genSeconds: this.data.genSeconds + 1 });
     }, 1000);
 
     try {
-      const res = await api.generatePractice(this.data.lessonId, this.data.practiceCount);
+      const res = await api.generatePractice(this.data.lessonId, this.data.practiceCount, force);
       if (res && res.status === 'ready') {
         this.finishGenerate(true);
         return;
@@ -124,6 +131,51 @@ Page({
     } catch (e) {
       // request 层已提示；额度不足会跳拦截页
       this.finishGenerate(false, e && e.silent ? '' : (e && e.msg) || '');
+    }
+  },
+
+  /** ===== 换一套题 ===== */
+
+  onOpenRegen() {
+    if (this.data.generating) return;
+    this.setData({ regenPanel: true });
+  },
+
+  onCloseRegen() {
+    this.setData({ regenPanel: false });
+  },
+
+  onRegenConfirm() {
+    // 覆盖旧题 + 扣 1 次额度，必须让家长明确知道后果
+    wx.showModal({
+      title: '换一套题？',
+      content: `会替换这一课现有的 ${this.data.total} 道题（答题进度也会清空），并消耗 1 次额度。`,
+      confirmText: '换一套',
+      success: (r) => {
+        if (r.confirm) this.startGenerate(true);
+      },
+    });
+  },
+
+  /** ===== 导出打印 ===== */
+
+  async onExportPrint() {
+    try {
+      const res = await api.getPracticePrintUrl(this.data.lessonId);
+      if (!res || !res.url) return;
+      wx.setClipboardData({
+        data: res.url,
+        success: () => {
+          wx.showModal({
+            title: '链接已复制',
+            content: '把链接粘贴到电脑浏览器打开，按 Ctrl+P 即可打印。答案在最后一页，打印后裁开留给家长。链接 7 天内有效。',
+            showCancel: false,
+            confirmText: '知道了',
+          });
+        },
+      });
+    } catch (e) {
+      // request 层已提示
     }
   },
 

@@ -40,11 +40,20 @@
 
     <!-- ============ 进度 ============ -->
     <view class="bar">
-      <view class="bar__text">第 {{index + 1}} / {{total}} 题</view>
+      <view class="bar__head">
+        <view class="bar__text">第 {{index + 1}} / {{total}} 题</view>
+        <view class="bar__ops">
+          <view class="bar__op" hover-class="bar__op--active" bindtap="onOpenRegen">换一套</view>
+          <view class="bar__op" hover-class="bar__op--active" bindtap="onExportPrint">导出打印</view>
+        </view>
+      </view>
       <view class="bar__track">
         <view class="bar__fill" style="width: {{progressPercent}}%;"></view>
       </view>
     </view>
+
+    <!-- ============ 出题中横幅（换题时不打断当前页） ============ -->
+    <view class="genbanner" wx:if="{{generating}}">AI 出题中 {{genSeconds}}s… 出好后自动刷新</view>
 
     <!-- ============ 题干 ============ -->
     <view class="q">
@@ -130,6 +139,10 @@
       <view class="btn btn--primary" hover-class="btn--active" bindtap="onGoMistake">看看错题本</view>
     </view>
 
+    <view class="export" hover-class="export--active" bindtap="onExportPrint">
+      导出打印（纸面做题用，链接发到电脑浏览器打印）
+    </view>
+
   </view>
 
   <!-- ============ 底部操作（答题中） ============ -->
@@ -157,5 +170,28 @@
     >
       {{index + 1 >= total ? '提交批改' : '确认'}}
     </view>
+  </view>
+
+  <!-- ============ 换一套题面板 ============ -->
+  <view class="rmask" wx:if="{{regenPanel}}" bindtap="onCloseRegen"></view>
+  <view class="rpanel" wx:if="{{regenPanel}}">
+    <view class="rpanel__title">换一套题</view>
+    <view class="rpanel__tip">会替换这一课现有的题目并清空答题进度，消耗 1 次额度</view>
+
+    <view class="rpanel__label">想练几道？</view>
+    <view class="counts">
+      <view
+        wx:for="{{countOptions}}"
+        wx:key="*this"
+        class="count {{practiceCount === item ? 'count--active' : ''}}"
+        data-count="{{item}}"
+        bindtap="onPickCount"
+      >{{item}} 题</view>
+    </view>
+
+    <view class="rpanel__btn" hover-class="rpanel__btn--active" bindtap="onRegenConfirm">
+      出 {{practiceCount}} 道新题
+    </view>
+    <view class="rpanel__cancel" hover-class="rpanel__cancel--active" bindtap="onCloseRegen">先不了</view>
   </view>
 </view>

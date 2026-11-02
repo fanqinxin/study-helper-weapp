@@ -21,9 +21,9 @@ Page({
     /** 今日任务 */
     todayTask: {
       title: '上传今天的作业',
-      desc: '拍张照片，AI 帮你检查一遍',
+      desc: '拍下老师布置的作业，AI 整理成闯关清单',
       actionText: '开始',
-      url: '/pages/homework/upload',
+      url: '/pages/assignment/today',
     },
     /** 今日任务进度 */
     taskDone: 0,
@@ -89,9 +89,24 @@ Page({
     return '晚上好';
   },
 
+  /** 本地日期 YYYY-MM-DD */
+  localToday() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  },
+
   /** 工具入口配置 */
   buildTools() {
     return [
+      {
+        key: 'assignment',
+        name: '今日作业',
+        desc: '闯关清单打卡',
+        url: '/pages/assignment/today',
+        icon: getIcon('check', '#F2994A', 26),
+        bg: '#FFF1E3',
+      },
       {
         key: 'upload',
         name: '上传作业',
@@ -148,6 +163,28 @@ Page({
         api.getProfile().catch(() => user),
       ]);
 
+      // 今日闯关单进度（有今天的任务单时，任务卡显示打卡进度）
+      const assignments = await api.listAssignments({ limit: 5 }).catch(() => []);
+      const today = assignments.find(
+        (a) => a.taskDate === this.localToday() && a.statusText === 'ready'
+      );
+      let task = null;
+      if (today) {
+        const done = today.items.filter((it) => it.done).length;
+        const total = today.items.length;
+        task = {
+          todayTask: {
+            title: today.title || '今日作业闯关',
+            desc: total && done < total ? `还剩 ${total - done} 项就闯关成功` : '今天的作业全部完成，太棒了',
+            actionText: '去打卡',
+            url: '/pages/assignment/today',
+          },
+          taskDone: done,
+          taskTotal: total,
+          taskPercent: total ? Math.round((done / total) * 100) : 0,
+        };
+      }
+
       const quotaData = quota || { totalLeft: 0, low: false };
 
       this.setData({
@@ -158,7 +195,13 @@ Page({
         textbook: profile && profile.textbookId
           ? { id: profile.textbookId, name: profile.textbookName || '人教版', grade: profile.grade || 3 }
           : null,
+        ...(task || {}),
       });
+
+      if (!task) {
+        // 没有今日任务单时恢复默认进度显示
+        this.setData({ taskDone: 0, taskTotal: 3, taskPercent: 0 });
+      }
 
       if (quota) app.globalData.quota = quota;
 

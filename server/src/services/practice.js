@@ -72,17 +72,20 @@ async function countQuestions(lessonId) {
  * 发起生成任务
  *
  * 幂等：已有题目直接返回 ready；正在生成直接返回 pending，绝不重复扣费。
+ * force=true 时忽略「已有题目」重新生成（覆盖旧题，worker 侧先 DELETE 再 INSERT），
+ * 用于"换一套题"；生成中锁仍然生效，防止连点重复扣费。
  * 题量只认 5/10/15/20 四档，其它值回落默认档（前端传错不该让用户白扣额度）。
  *
  * @param {number} [count] 期望题量
+ * @param {boolean} [force] 已有题也重新生成
  */
-async function createPractice(uid, lessonId, count) {
+async function createPractice(uid, lessonId, count, force = false) {
   const lesson = await loadLesson(uid, lessonId);
   const id = Number(lesson.id);
   const wantCount = normalizeCount(count);
 
   const existing = await countQuestions(id);
-  if (existing > 0) {
+  if (existing > 0 && !force) {
     return { lessonId: id, status: 'ready', count: existing };
   }
 

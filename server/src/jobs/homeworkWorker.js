@@ -13,12 +13,14 @@ const db = require('../models/db');
 const homeworkService = require('../services/homework');
 const textbookService = require('../services/textbook');
 const practiceService = require('../services/practice');
+const assignmentService = require('../services/assignment');
 const { redis } = require('../utils/redis');
 const logger = require('../utils/logger');
 
 const QUEUE_KEY = 'queue:homework:analyze';
 const QUEUE_TEXTBOOK = textbookService.TEXTBOOK_QUEUE;
 const QUEUE_PRACTICE = practiceService.PRACTICE_QUEUE;
+const QUEUE_ASSIGNMENT = assignmentService.ASSIGNMENT_QUEUE;
 const BLOCK_SECONDS = 5;
 
 let running = true;
@@ -32,7 +34,7 @@ let running = true;
  */
 async function consumeOnce() {
   // BRPOP 阻塞等待，超时返回 null，避免空转
-  const res = await redis.brpop(QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE, BLOCK_SECONDS);
+  const res = await redis.brpop(QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE, QUEUE_ASSIGNMENT, BLOCK_SECONDS);
   if (!res) return false;
 
   const [key, payload] = res;
@@ -68,6 +70,18 @@ async function consumeOnce() {
     return true;
   }
 
+  if (key === QUEUE_ASSIGNMENT) {
+    const assignmentId = Number(msg.assignmentId);
+    if (!assignmentId) return true;
+    try {
+      await assignmentService.runParseAssignment(assignmentId, Number(msg.uid), msg.refId);
+    } catch (e) {
+      // runParseAssignment 内部已处理失败与退款，这里只兜底记录
+      logger.error({ err: e.message, assignmentId }, 'worker 处理作业识别异常');
+    }
+    return true;
+  }
+
   const homeworkId = Number(msg.homeworkId);
   if (!homeworkId) return true;
 
@@ -81,7 +95,7 @@ async function consumeOnce() {
 }
 
 async function main() {
-  logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE] }, '任务 Worker 已启动');
+  logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE, QUEUE_ASSIGNMENT] }, '任务 Worker 已启动');
   // 可辨识的启动标记：排查「选了 10 道只出 4 道」时，先看这行在不在，
   // 不在就说明 worker 容器还跑着旧镜像（旧版把题量写死成 4）
   logger.info(

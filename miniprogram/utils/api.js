@@ -30,12 +30,26 @@ module.exports = {
   getLesson: (lessonId) => http.get(`/lesson/${lessonId}`),
   /** 设置「当前学到哪一课」（不扣额度，允许往回调） */
   setCurrentLesson: (lessonId) => http.post(`/lesson/${lessonId}/current`),
-  /** 按课文生成同步练习（消耗 1 次额度，异步入队） */
-  generatePractice: (lessonId, count) => http.post(`/lesson/${lessonId}/practice`, { count }),
+  /** 按课文生成同步练习（消耗 1 次额度，异步入队）；force=true 换一套题（覆盖旧题） */
+  generatePractice: (lessonId, count, force) => http.post(`/lesson/${lessonId}/practice`, { count, force }),
   /** 练习生成进度（轮询） */
   getPracticeStatus: (lessonId) => http.get(`/lesson/${lessonId}/practice/status`),
   /** 提交练习答案并判分 */
   submitLesson: (lessonId, answers) => http.post(`/lesson/${lessonId}/submit`, { answers }),
+  /** 练习题打印链接（电脑浏览器打开 Ctrl+P，不消耗额度） */
+  getPracticePrintUrl: (lessonId) => http.post(`/lesson/${lessonId}/practice/print-url`, {}, { loading: true }),
+
+  // ============ 作业任务单 ============
+  /** 上传老师布置的作业截图 → AI 按学科生成打卡清单（消耗 1 次额度，异步入队） */
+  createAssignment: (data) => http.post('/assignment', data),
+  /** 识别进度（轮询，不要自动跳额度页——错误由页面自己提示） */
+  getAssignmentStatus: (id) => http.get(`/assignment/${id}/status`, {}, { handleQuota: false }),
+  /** 任务单列表（默认最近 7 天；?date= 看指定日期） */
+  listAssignments: (params) => http.get('/assignment/list', params),
+  /** 打卡 / 取消打卡 */
+  toggleAssignmentItem: (itemId, done) => http.post(`/assignment/item/${itemId}/toggle`, { done }),
+  /** 闯关单打印链接 */
+  getAssignmentPrintUrl: (id) => http.post(`/assignment/${id}/print-url`, {}, { loading: true }),
 
   // ============ 作业批改 ============
   /** 提交批改（额度扣减在服务端完成） */

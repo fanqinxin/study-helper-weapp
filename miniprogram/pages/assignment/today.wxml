@@ -1,0 +1,82 @@
+<view class="page theme-{{theme}}">
+  <nav-bar mode="title" title="今日作业" />
+
+  <skeleton wx:if="{{loading}}" rows="{{3}}" />
+
+  <!-- ============ 空态：还没上传今天的作业 ============ -->
+  <block wx:elif="{{!assignment && !parsing}}">
+    <empty-state
+      icon="plan"
+      color="#F2994A"
+      text="今天还没有作业任务"
+      desc="把老师布置的作业（班级群截图 / 通知）拍下来，AI 会按学科整理成闯关清单。"
+    />
+
+    <view class="upload">
+      <view class="upload__btn {{uploading ? 'upload__btn--busy' : ''}}" hover-class="upload__btn--active" bindtap="onUpload">
+        {{uploading ? '正在上传…' : '拍一拍老师的作业'}}
+      </view>
+      <view class="upload__tip">最多 3 张截图 · 识别消耗 1 次额度 · 失败自动退还</view>
+    </view>
+  </block>
+
+  <!-- ============ 识别中 ============ -->
+  <block wx:elif="{{parsing}}">
+    <view class="parsing">
+      <view class="parsing__title">AI 正在整理作业…</view>
+      <view class="parsing__sub">已经等了 {{parseSeconds}} 秒，识别好会自动刷新</view>
+      <view class="parsing__bar"><view class="parsing__bar-dot"></view></view>
+      <view class="parsing__tip">可以离开这个页面，稍后回来下拉刷新即可</view>
+    </view>
+  </block>
+
+  <!-- ============ 任务单 ============ -->
+  <block wx:else>
+    <!-- 闯关头卡 -->
+    <view class="quest {{allDone ? 'quest--done' : ''}}">
+      <view class="quest__head">
+        <view class="quest__title">{{assignment.title || '今日闯关任务'}}</view>
+        <view class="quest__progress">{{doneCount}}/{{totalCount}}</view>
+      </view>
+      <view class="quest__sub">
+        {{allDone ? '全部完成，闯关成功！给孩子点个赞' : '每完成一项点一下打勾，全部完成就闯关成功'}}
+      </view>
+
+      <view class="quest__bar">
+        <view class="quest__bar-fill" style="width: {{percent}}%;"></view>
+      </view>
+
+      <view class="quest__celebrate" wx:if="{{allDone}}">⭐ 闯关成功 ⭐</view>
+    </view>
+
+    <!-- 老师提醒 -->
+    <view class="note" wx:if="{{assignment.note}}">老师提醒：{{assignment.note}}</view>
+
+    <!-- 分学科清单 -->
+    <view class="group" wx:for="{{groups}}" wx:key="subject">
+      <view class="group__title">【{{item.name}}】</view>
+      <view
+        wx:for="{{item.items}}"
+        wx:for-item="task"
+        wx:key="id"
+        class="row {{task.done ? 'row--done' : ''}}"
+        hover-class="row--hover"
+        data-id="{{task.id}}"
+        bindtap="onToggleItem"
+      >
+        <view class="row__box">{{task.done ? '✓' : ''}}</view>
+        <view class="row__content">{{task.content}}</view>
+      </view>
+    </view>
+
+    <!-- 操作 -->
+    <view class="ops">
+      <view class="ops__print" hover-class="ops__print--active" bindtap="onExportPrint">
+        导出打印闯关单（链接发电脑浏览器打印）
+      </view>
+      <view class="ops__again" hover-class="ops__again--active" bindtap="onUpload">
+        再传一份作业（如晚上又布置了新任务）
+      </view>
+    </view>
+  </block>
+</view>

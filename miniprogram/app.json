@@ -11,6 +11,7 @@
     "pages/homework/upload",
     "pages/homework/processing",
     "pages/homework/report",
+    "pages/assignment/today",
     "pages/textbook/center",
     "pages/textbook/add",
     "pages/parent/bind",

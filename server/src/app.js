@@ -17,6 +17,8 @@ const textbookRoutes = require('./routes/textbook');
 const mistakeRoutes = require('./routes/mistake');
 const planRoutes = require('./routes/plan');
 const parentRoutes = require('./routes/parent');
+const assignmentRoutes = require('./routes/assignment');
+const printRoutes = require('./routes/print');
 
 const app = express();
 
@@ -98,6 +100,9 @@ app.use('/api/v1', textbookRoutes);
 app.use('/api/v1', mistakeRoutes);
 app.use('/api/v1', planRoutes);
 app.use('/api/v1', parentRoutes);
+app.use('/api/v1', assignmentRoutes);
+// 打印页给浏览器直接访问（无登录态，靠签名 token），不挂在 /api/v1 的 auth 体系里
+app.use('/api/v1', printRoutes);
 
 /** 404 */
 app.use((req, res) => {

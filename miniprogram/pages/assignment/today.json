@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/nav-bar",
+    "skeleton": "/components/skeleton/skeleton",
+    "empty-state": "/components/empty-state/empty-state"
+  },
+  "enablePullDownRefresh": true
+}

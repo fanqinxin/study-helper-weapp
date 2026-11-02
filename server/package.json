@@ -11,7 +11,7 @@
     "migrate": "node src/models/migrate.js",
     "seed": "node scripts/seed.js",
     "seed:check": "node scripts/seed.js --dry-run",
-    "check": "node scripts/check-requires.js && node scripts/check-query-usage.js && node scripts/selftest-quota.js && node scripts/selftest-textbook.js && node scripts/selftest-practice.js && node scripts/selftest-practice-quality.js",
+    "check": "node scripts/check-requires.js && node scripts/check-query-usage.js && node scripts/selftest-quota.js && node scripts/selftest-textbook.js && node scripts/selftest-practice.js && node scripts/selftest-practice-quality.js && node scripts/selftest-assignment.js",
     "docker:up": "docker compose up -d --build",
     "docker:migrate": "docker compose --profile tools run --rm migrate",
     "docker:seed": "docker compose --profile tools run --rm seed",
@@ -22,7 +22,8 @@
     "check:quota": "node scripts/selftest-quota.js",
     "check:textbook": "node scripts/selftest-textbook.js",
     "check:practice": "node scripts/selftest-practice.js",
-    "check:practice-quality": "node scripts/selftest-practice-quality.js"
+    "check:practice-quality": "node scripts/selftest-practice-quality.js",
+    "check:assignment": "node scripts/selftest-assignment.js"
   },
   "dependencies": {
     "axios": "^1.7.7",

@@ -220,3 +220,37 @@ INSERT IGNORE INTO `textbook` (`id`, `name`, `subject`, `grade`, `volume`) VALUE
   (2, '苏教版', 1, 3, 1),
   (3, '北师大版', 1, 3, 1),
   (4, '人教PEP', 3, 3, 1);
+
+-- ------------------------------------------------------------
+-- 作业任务单：家长上传老师布置的作业截图，AI 按学科生成打卡清单
+-- image_hash 唯一索引用于幂等，防止重复扣额度
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `assignment` (
+  `id`          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  `uid`         BIGINT       NOT NULL,
+  `task_date`   DATE         NOT NULL COMMENT '作业所属日期',
+  `title`       VARCHAR(128) DEFAULT NULL COMMENT '任务单标题，如 10/28 作业',
+  `note`        VARCHAR(255) DEFAULT NULL COMMENT '老师的重要提醒',
+  `image_urls`  JSON         DEFAULT NULL COMMENT '原始作业截图',
+  `image_hash`  CHAR(64)     DEFAULT NULL COMMENT '图片指纹，幂等用',
+  `status`      TINYINT      NOT NULL DEFAULT 0 COMMENT '0=识别中 1=可用 2=识别失败',
+  `error`       VARCHAR(255) DEFAULT NULL,
+  `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_uid_date (`uid`, `task_date`),
+  UNIQUE KEY uk_uid_hash (`uid`, `image_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='作业任务单';
+
+-- ------------------------------------------------------------
+-- 作业任务明细：一条一个可勾选的事项
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `assignment_item` (
+  `id`            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  `assignment_id` BIGINT       NOT NULL,
+  `subject`       TINYINT      NOT NULL DEFAULT 0 COMMENT '0=通用 1=语文 2=数学 3=英语 4=其他',
+  `content`       VARCHAR(255) NOT NULL,
+  `sort`          INT          NOT NULL DEFAULT 0,
+  `done`          TINYINT      NOT NULL DEFAULT 0,
+  `done_at`       DATETIME     DEFAULT NULL,
+  INDEX idx_assignment (`assignment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='作业任务明细';

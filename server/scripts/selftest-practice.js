@@ -239,6 +239,18 @@ test('已有题目：不再扣费，直接返回 ready', async () => {
   assert.strictEqual(redisState.pushed.length, 0, '不应入队');
 });
 
+test('force 换一套题：已有题也重新生成、扣费、带题量入队', async () => {
+  reset();
+  state.questions.push({ lesson_id: 7, stem: 'a', answer: 'A' });
+
+  const r = await practice.createPractice(1, 7, 10, true);
+
+  assert.strictEqual(r.status, 'pending', 'force 时应忽略已有题目重新生成');
+  assert.strictEqual(quotaState.consumed.length, 1, '换一套题要扣 1 次额度');
+  const msg = JSON.parse(redisState.pushed[0].value);
+  assert.strictEqual(msg.count, 10, '题量应进队列');
+});
+
 test('首次生成：扣 1 次额度、入队、返回 pending', async () => {
   reset();
   const r = await practice.createPractice(1, 7);
