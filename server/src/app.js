@@ -8,6 +8,7 @@ const db = require('./models/db');
 const { redis } = require('./utils/redis');
 const { CODES, fail } = require('./utils/response');
 const { uploadDir, publicPrefix } = require('./models/storage');
+const { version, features } = require('./version');
 
 const authRoutes = require('./routes/auth');
 const homeworkRoutes = require('./routes/homework');
@@ -75,9 +76,23 @@ app.use((req, res, next) => {
   next();
 });
 
-/** 健康检查（含依赖探活） */
+/**
+ * 健康检查（含依赖探活）
+ *
+ * version / features 用于确认容器跑的是哪一版代码：
+ *   小程序已更新但服务端还是老镜像时，接口会回老文案（如"请先上传作业截图"），
+ *   此前只能靠猜。现在 curl 这个接口就能判断。
+ */
 app.get('/api/v1/health', async (req, res) => {
-  const health = { status: 'ok', env: config.env, db: false, redis: false, uptime: Math.round(process.uptime()) };
+  const health = {
+    status: 'ok',
+    version,
+    features,
+    env: config.env,
+    db: false,
+    redis: false,
+    uptime: Math.round(process.uptime()),
+  };
   try {
     await db.ping();
     health.db = true;

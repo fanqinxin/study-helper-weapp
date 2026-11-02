@@ -285,6 +285,16 @@ function test(name, fn) {
 
 /** ── 用例 ───────────────────────────────────────────────── */
 
+test('能力清单暴露 assignment.text（小程序靠它判断服务端是否已更新）', async () => {
+  const { version, features } = require(path.join(SRC, 'version.js'));
+  assert.ok(version, '必须能取到版本号');
+  assert.ok(
+    features.includes('assignment.text'),
+    '缺少 assignment.text 会让小程序把新服务端误判成旧版本，页面上会报"服务端版本较旧"'
+  );
+  assert.ok(features.includes('assignment.photo'));
+});
+
 test('参数校验：无图无文字 / 超 6 张 / 文字超长直接报错，不扣额度', async () => {
   reset();
   await assert.rejects(() => assignment.createAssignment(1, { imageUrls: [] }), /粘贴作业文字或上传作业截图/);

@@ -12,6 +12,10 @@
       desc="把老师布置的作业粘贴到下面（班级群消息直接复制就行），AI 会按学科整理成闯关清单。"
     />
 
+    <view class="outdated" wx:if="{{serverOutdated}}">
+      服务端版本较旧，目前只支持拍照识别。请在服务器更新 api 镜像后再粘贴文字提交。
+    </view>
+
     <view class="compose">
       <textarea
         class="compose__input"

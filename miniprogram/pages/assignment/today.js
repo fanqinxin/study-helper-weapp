@@ -62,10 +62,17 @@ Page({
     /** AI 识别中 */
     parsing: false,
     parseSeconds: 0,
+    /**
+     * 服务端是否还是旧版本（不支持粘贴文字提交）。
+     * 旧版只认截图，提交文字会回"请先上传作业截图"，
+     * 用户会误以为是自己没拍图 —— 这种情况必须在页面上说清楚。
+     */
+    serverOutdated: false,
   },
 
   onLoad() {
     this.setData({ theme: app.globalData.theme || 'light' });
+    this.checkServer();
   },
 
   onShow() {
@@ -133,6 +140,30 @@ Page({
 
   /** ===== 提交作业 ===== */
 
+  /**
+   * 探测服务端是否支持"粘贴文字提交"
+   *
+   * 结果是能力项（health 里的 features），不是版本号 —— 版本号对不出差异，
+   * 能力名能直接回答"这个功能服务端认不认"。只探一次，缓存在 globalData。
+   */
+  async checkServer() {
+    const g = app.globalData;
+    if (g.assignmentTextSupported !== undefined) {
+      this.setData({ serverOutdated: !g.assignmentTextSupported });
+      return;
+    }
+    try {
+      const info = await api.getServerInfo();
+      const features = (info && info.features) || [];
+      // 老服务端的 health 没有 features，按不支持处理
+      const supported = features.indexOf('assignment.text') >= 0;
+      g.assignmentTextSupported = supported;
+      this.setData({ serverOutdated: !supported });
+    } catch (e) {
+      // 探测失败就静默跳过，提交时还有兜底提示，不要因此打扰用户
+    }
+  },
+
   /** 粘贴文字输入 */
   onDraftInput(e) {
     this.setData({ draftText: e.detail.value || '' });
@@ -168,7 +199,23 @@ Page({
     } catch (e) {
       // request 层已提示（额度不足会跳拦截页）
       this.setData({ uploading: false, parsing: false });
+      this.explainIfOutdated(e && e.msg);
     }
+  },
+
+  /**
+   * 服务端回「截图」相关错误时，说明它还是只认图片的旧版本。
+   * 这不是用户操作错，得把原因说清楚，否则家长会一直重试粘贴。
+   */
+  explainIfOutdated(msg) {
+    if (!msg || msg.indexOf('截图') < 0) return;
+    app.globalData.assignmentTextSupported = false;
+    this.setData({ serverOutdated: true });
+    wx.showModal({
+      title: '服务端版本较旧',
+      content: '当前服务端还不支持粘贴文字提交作业，额度没有扣。请在服务器更新 api 镜像后再试。',
+      showCancel: false,
+    });
   },
 
   /** ===== 拍照识别（辅助方式） ===== */

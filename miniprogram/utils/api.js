@@ -8,6 +8,16 @@
 const { http } = require('./request');
 
 module.exports = {
+  // ============ 服务信息 ============
+  /**
+   * 服务端健康检查（含 version / features）
+   *
+   * 用来判断线上跑的是哪一版代码：小程序更新了但服务端还是旧镜像时，
+   * 接口会回老文案（如"请先上传作业截图"），很容易被误认为操作问题。
+   * 免鉴权、静默失败，探测不到就当没这回事。
+   */
+  getServerInfo: () => http.get('/health', {}, { auth: false, handleQuota: false, silent: true }),
+
   // ============ 用户 ============
   getProfile: () => http.get('/user/profile'),
   updateProfile: (data) => http.post('/user/profile', data),

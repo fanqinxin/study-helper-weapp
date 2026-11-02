@@ -370,3 +370,14 @@
   font-size: var(--fs-tiny);
   color: var(--text-tertiary);
 }
+
+/* ---------- 服务端版本过旧提示 ---------- */
+.outdated {
+  margin: var(--space-md) var(--space-lg) 0;
+  padding: 18rpx 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--coral-light);
+  color: var(--coral);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}

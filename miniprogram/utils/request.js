@@ -53,6 +53,7 @@ function cleanQuery(data) {
  * @param {boolean} [options.loading] 是否显示 loading
  * @param {boolean} [options.auth] 是否需要登录态，默认 true
  * @param {boolean} [options.handleQuota] 是否自动处理额度不足，默认 true
+ * @param {boolean} [options.silent] 出错不 toast，由调用方自己决定怎么提示（探测类请求用）
  */
 function request(options) {
   const {
@@ -62,6 +63,7 @@ function request(options) {
     loading = false,
     auth = true,
     handleQuota = true,
+    silent = false,
     header = {},
   } = options;
 
@@ -101,7 +103,7 @@ function request(options) {
           return reject(new Error('请求过于频繁'));
         }
         if (res.statusCode >= 500) {
-          wx.showToast({ title: '服务开小差了', icon: 'none' });
+          if (!silent) wx.showToast({ title: '服务开小差了', icon: 'none' });
           return reject(new Error(body.msg || '服务异常'));
         }
 
@@ -121,11 +123,11 @@ function request(options) {
 
         // 其他业务错误
         const msg = body.msg || '操作失败';
-        wx.showToast({ title: msg, icon: 'none', duration: 2000 });
+        if (!silent) wx.showToast({ title: msg, icon: 'none', duration: 2000 });
         return reject({ code: body.code, msg });
       },
       fail(err) {
-        wx.showToast({ title: '网络异常，请检查网络', icon: 'none' });
+        if (!silent) wx.showToast({ title: '网络异常，请检查网络', icon: 'none' });
         reject(err);
       },
       complete() {

@@ -16,6 +16,7 @@ const practiceService = require('../services/practice');
 const assignmentService = require('../services/assignment');
 const { redis } = require('../utils/redis');
 const logger = require('../utils/logger');
+const { version } = require('../version');
 
 const QUEUE_KEY = 'queue:homework:analyze';
 const QUEUE_TEXTBOOK = textbookService.TEXTBOOK_QUEUE;
@@ -95,7 +96,7 @@ async function consumeOnce() {
 }
 
 async function main() {
-  logger.info({ queues: [QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE, QUEUE_ASSIGNMENT] }, '任务 Worker 已启动');
+  logger.info({ version, queues: [QUEUE_KEY, QUEUE_TEXTBOOK, QUEUE_PRACTICE, QUEUE_ASSIGNMENT] }, '任务 Worker 已启动');
   // 可辨识的启动标记：排查「选了 10 道只出 4 道」时，先看这行在不在，
   // 不在就说明 worker 容器还跑着旧镜像（旧版把题量写死成 4）
   logger.info(
