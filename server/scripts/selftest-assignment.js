@@ -65,14 +65,15 @@ async function route(sql, params) {
       .filter((a) => a.id === params[0] && a.uid === params[1])
       .map((a) => ({ ...a }));
   }
-  if (/^INSERT INTO assignment \(uid, task_date, image_urls, image_hash, status\)/.test(s)) {
+  if (/^INSERT INTO assignment \(uid, task_date, image_urls, source_text, image_hash, status\)/.test(s)) {
     const a = {
       id: state.nextId++,
       uid: params[0],
       task_date: params[1],
       image_urls: params[2],
-      image_hash: params[3],
-      status: params[4],
+      source_text: params[3],
+      image_hash: params[4],
+      status: params[5],
       title: null,
       note: null,
       error: null,
@@ -183,15 +184,16 @@ const fakeDb = {
 };
 
 /** ── 假 AI ──────────────────────────────────────────────── */
-const aiState = { calls: 0, result: null, fail: null };
+const aiState = { calls: 0, result: null, fail: null, lastPayload: null };
 const fakeAi = {
   // 模拟真实现：识别不出任何任务条目时报错（真 ai.recognizeAssignment 的清洗逻辑）
-  async recognizeAssignment() {
+  async recognizeAssignment(payload) {
     aiState.calls += 1;
+    aiState.lastPayload = payload;
     if (aiState.fail) throw new Error(aiState.fail);
     const groups = (aiState.result && aiState.result.groups) || [];
     const hasItems = groups.some((g) => (g.items || []).length);
-    if (!hasItems) throw new Error('没有识别出作业任务，请确认拍的是作业内容');
+    if (!hasItems) throw new Error('没有识别出作业任务，请确认提交的是作业内容');
     return aiState.result;
   },
   SUBJECT_NAME: { 0: '通用', 1: '语文' },
@@ -266,6 +268,7 @@ function reset() {
   aiState.calls = 0;
   aiState.result = null;
   aiState.fail = null;
+  aiState.lastPayload = null;
   redisState.store = new Map();
   redisState.pushed = [];
   quotaState.consumed = [];
@@ -282,12 +285,17 @@ function test(name, fn) {
 
 /** ── 用例 ───────────────────────────────────────────────── */
 
-test('参数校验：无图 / 超 6 张直接报错，不扣额度', async () => {
+test('参数校验：无图无文字 / 超 6 张 / 文字超长直接报错，不扣额度', async () => {
   reset();
-  await assert.rejects(() => assignment.createAssignment(1, { imageUrls: [] }), /上传作业截图/);
+  await assert.rejects(() => assignment.createAssignment(1, { imageUrls: [] }), /粘贴作业文字或上传作业截图/);
+  await assert.rejects(() => assignment.createAssignment(1, { text: '   ' }), /粘贴作业文字或上传作业截图/);
   await assert.rejects(
     () => assignment.createAssignment(1, { imageUrls: new Array(7).fill('/a.jpg') }),
     /最多上传/
+  );
+  await assert.rejects(
+    () => assignment.createAssignment(1, { text: '长'.repeat(4001) }),
+    /太长/
   );
   assert.strictEqual(quotaState.consumed.length, 0);
   assert.strictEqual(state.assignments.length, 0);
@@ -322,6 +330,41 @@ test('幂等：同一组截图重复提交直接返回，不重复扣费', async
   assert.strictEqual(again.assignmentId, first.assignmentId);
   assert.strictEqual(quotaState.consumed.length, 1, '只应扣一次');
   assert.strictEqual(redisState.pushed.length, 1, '只应入队一次');
+});
+
+test('粘贴文字：主要方式，source_text 落库、image_urls 为空，同样扣费入队', async () => {
+  reset();
+  const r = await assignment.createAssignment(1, { text: '  数学书P23 1-4题，朗读第5课  ' });
+
+  assert.strictEqual(r.status, 'pending');
+  assert.strictEqual(quotaState.consumed.length, 1);
+
+  const row = state.assignments.find((a) => a.id === r.assignmentId);
+  assert.strictEqual(row.source_text, '数学书P23 1-4题，朗读第5课', '文字应去首尾空白后落库');
+  assert.strictEqual(row.image_urls, null, '纯文字不应有截图');
+
+  // worker 执行时应把文字传给 AI
+  aiState.result = { title: 'T', note: null, groups: [{ subject: 2, items: ['口算'] }] };
+  await assignment.runParseAssignment(r.assignmentId, 1, `as-${r.assignmentId}`);
+  assert.strictEqual(aiState.lastPayload.text, '数学书P23 1-4题，朗读第5课');
+  assert.strictEqual(aiState.lastPayload.imageUrls.length, 0);
+});
+
+test('幂等：同一段文字重复提交直接返回，不重复扣费', async () => {
+  reset();
+  const first = await assignment.createAssignment(1, { text: '口算一页，朗读课文' });
+  const again = await assignment.createAssignment(1, { text: '口算一页，朗读课文' });
+
+  assert.strictEqual(again.cached, true);
+  assert.strictEqual(again.assignmentId, first.assignmentId);
+  assert.strictEqual(quotaState.consumed.length, 1);
+});
+
+test('文字与截图指纹隔离：同一用户分别提交各扣一次', async () => {
+  reset();
+  await assignment.createAssignment(1, { text: '口算一页' });
+  await assignment.createAssignment(1, { imageUrls: IMGS });
+  assert.strictEqual(quotaState.consumed.length, 2, '不同来源是两份作业');
 });
 
 test('额度不足：报 4010 且不留记录', async () => {

@@ -21,7 +21,7 @@ Page({
     /** 今日任务 */
     todayTask: {
       title: '上传今天的作业',
-      desc: '拍下老师布置的作业，AI 整理成闯关清单',
+      desc: '粘贴或拍下作业，AI 整理成闯关清单',
       actionText: '开始',
       url: '/pages/assignment/today',
     },

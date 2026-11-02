@@ -1,13 +1,13 @@
 /**
  * 作业任务单服务
  *
- * 家长把老师布置作业的截图（班级群消息、通知等）拍下来上传，
+ * 家长把老师布置的作业交上来（粘贴班级群文字为主，拍照截图为辅），
  * AI 按学科整理成可逐项打勾的任务清单（"闯关"模式）。
  *
  * 模式与教材识别 / 练习生成一致：
- *   - 长耗时视觉 AI → Redis 队列 + worker，接口立即返回
+ *   - 长耗时 AI → Redis 队列 + worker，接口立即返回
  *   - 扣 1 次额度 → 失败自动退还
- *   - image_hash 唯一索引做幂等：同一张截图重复提交不重复扣费
+ *   - image_hash 唯一索引做幂等：同一份内容（文字或截图）重复提交不重复扣费
  */
 const crypto = require('crypto');
 const db = require('../models/db');
@@ -49,6 +49,10 @@ function hashImages(imageUrls) {
   return crypto.createHash('sha256').update(imageUrls.join('|')).digest('hex');
 }
 
+function hashText(text) {
+  return crypto.createHash('sha256').update(`text|${text}`).digest('hex');
+}
+
 /** 归属校验：任务单必须属于当前用户 */
 async function loadAssignment(uid, assignmentId) {
   const id = toInt(assignmentId, { min: 1 });
@@ -76,35 +80,47 @@ async function loadItems(assignmentId) {
 /**
  * 提交识别任务
  *
+ * 两种来源（至少其一）：截图 imageUrls 或粘贴的作业文字 text。
+ * 文字是主要方式（班级群消息直接复制，比拍照清楚得多）；截图作为补充。
+ *
  * @param {number} uid
  * @param {object} params
- * @param {string[]} params.imageUrls 已上传的作业截图（相对路径）
+ * @param {string[]} [params.imageUrls] 已上传的作业截图（相对路径）
+ * @param {string} [params.text] 粘贴的作业文字
  * @param {string} [params.taskDate] 作业所属日期，默认今天
  * @returns {Promise<{assignmentId:number, status:string, cached:boolean}>}
  * @throws {quota.QuotaError} code=4010 额度不足
  */
-async function createAssignment(uid, { imageUrls, taskDate } = {}) {
-  if (!Array.isArray(imageUrls) || !imageUrls.length) {
-    const e = new Error('请先上传作业截图');
+async function createAssignment(uid, { imageUrls, text, taskDate } = {}) {
+  const hasImages = Array.isArray(imageUrls) && imageUrls.length > 0;
+  const cleanText = typeof text === 'string' ? text.trim() : '';
+
+  if (!hasImages && !cleanText) {
+    const e = new Error('请粘贴作业文字或上传作业截图');
     e.code = 4000;
     throw e;
   }
-  if (imageUrls.length > MAX_IMAGES) {
+  if (cleanText.length > 4000) {
+    const e = new Error('作业文字太长了，请只保留老师布置作业的部分');
+    e.code = 4000;
+    throw e;
+  }
+  if (hasImages && imageUrls.length > MAX_IMAGES) {
     const e = new Error(`最多上传 ${MAX_IMAGES} 张截图`);
     e.code = 4000;
     throw e;
   }
   const date = normalizeDate(taskDate);
-  const imageHash = hashImages(imageUrls);
-  const consumeRefId = `pending-${imageHash.slice(0, 56)}`;
+  const contentHash = cleanText ? hashText(cleanText) : hashImages(imageUrls);
+  const consumeRefId = `pending-${contentHash.slice(0, 56)}`;
 
-  // ---- 幂等：同一用户同一组截图，直接返回已有任务单 ----
+  // ---- 幂等：同一用户同一份内容（文字或截图），直接返回已有任务单 ----
   const exist = await db.query(
     'SELECT id, status FROM assignment WHERE uid = ? AND image_hash = ? LIMIT 1',
-    [uid, imageHash]
+    [uid, contentHash]
   );
   if (exist.length && exist[0].status !== STATUS.FAILED) {
-    logger.info({ uid, assignmentId: exist[0].id }, '作业截图命中幂等，直接返回已有任务单');
+    logger.info({ uid, assignmentId: exist[0].id }, '作业内容命中幂等，直接返回已有任务单');
     return {
       assignmentId: Number(exist[0].id),
       status: exist[0].status === STATUS.READY ? 'ready' : 'pending',
@@ -113,7 +129,7 @@ async function createAssignment(uid, { imageUrls, taskDate } = {}) {
   }
 
   // 防并发重复扣费
-  const lockKey = `lock:assignment:${uid}:${imageHash.slice(0, 32)}`;
+  const lockKey = `lock:assignment:${uid}:${contentHash.slice(0, 32)}`;
   const locked = await redis.set(lockKey, String(uid), 'EX', 30, 'NX');
   if (!locked) {
     const e = new Error('任务正在创建中，请勿重复提交');
@@ -126,9 +142,16 @@ async function createAssignment(uid, { imageUrls, taskDate } = {}) {
     await quota.consume(uid, consumeRefId, '识别作业任务消耗');
 
     const res = await db.query(
-      `INSERT INTO assignment (uid, task_date, image_urls, image_hash, status)
-       VALUES (?, ?, ?, ?, ?)`,
-      [uid, date, JSON.stringify(imageUrls), imageHash, STATUS.PARSING]
+      `INSERT INTO assignment (uid, task_date, image_urls, source_text, image_hash, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        uid,
+        date,
+        hasImages ? JSON.stringify(imageUrls) : null,
+        cleanText || null,
+        contentHash,
+        STATUS.PARSING,
+      ]
     );
     assignmentId = res.insertId;
 
@@ -186,8 +209,9 @@ async function runParseAssignment(assignmentId, uid, refId) {
     const imageUrls = typeof row.image_urls === 'string'
       ? JSON.parse(row.image_urls)
       : row.image_urls || [];
+    const text = row.source_text || '';
 
-    const parsed = await ai.recognizeAssignment(imageUrls);
+    const parsed = await ai.recognizeAssignment({ imageUrls, text });
 
     // 组内条目按顺序落库；sort 用组序×1000 + 条内序，保证前端按学科分组展示时顺序稳定
     let flat = 0;

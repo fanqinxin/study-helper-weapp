@@ -3,20 +3,40 @@
 
   <skeleton wx:if="{{loading}}" rows="{{3}}" />
 
-  <!-- ============ 空态：还没上传今天的作业 ============ -->
+  <!-- ============ 空态：还没提交今天的作业 ============ -->
   <block wx:elif="{{!assignment && !parsing}}">
     <empty-state
       icon="plan"
       color="#F2994A"
       text="今天还没有作业任务"
-      desc="把老师布置的作业（班级群截图 / 通知）拍下来，AI 会按学科整理成闯关清单。"
+      desc="把老师布置的作业粘贴到下面（班级群消息直接复制就行），AI 会按学科整理成闯关清单。"
     />
 
-    <view class="upload">
-      <view class="upload__btn {{uploading ? 'upload__btn--busy' : ''}}" hover-class="upload__btn--active" bindtap="onUpload">
-        {{uploading ? '正在上传…' : '拍一拍老师的作业'}}
+    <view class="compose">
+      <textarea
+        class="compose__input"
+        value="{{draftText}}"
+        bindinput="onDraftInput"
+        maxlength="{{2000}}"
+        placeholder="粘贴老师布置的作业，比如：&#10;1. 数学书 P23 第 1-4 题&#10;2. 朗读课文第 5 课并打卡&#10;3. 跳绳 200 个"
+        placeholder-class="compose__placeholder"
+      ></textarea>
+      <view class="compose__count">{{draftText.length}}/2000</view>
+
+      <view
+        class="compose__btn {{draftText.length ? '' : 'compose__btn--disabled'}} {{uploading ? 'upload__btn--busy' : ''}}"
+        hover-class="compose__btn--active"
+        bindtap="onSubmitText"
+      >
+        AI 整理成任务单（1 次额度）
       </view>
-      <view class="upload__tip">最多 3 张截图 · 识别消耗 1 次额度 · 失败自动退还</view>
+
+      <view class="compose__divider"><text>或者</text></view>
+
+      <view class="compose__photo" hover-class="compose__photo--active" bindtap="onUpload">
+        📷 拍照识别（作业是纸质/黑板拍不下时用）
+      </view>
+      <view class="compose__tip">识别失败自动退还额度</view>
     </view>
   </block>
 

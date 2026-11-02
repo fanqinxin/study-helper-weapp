@@ -510,15 +510,28 @@ async function generatePractice({ subject, grade, unit, title, count = 5 }) {
 }
 
 /**
- * 识别老师布置的作业截图 → 按学科生成任务清单
+ * 识别老师布置的作业 → 按学科生成任务清单
  *
- * 输入是班级群作业通知的截图（可能含寒暄、表情、接龙），
+ * 两种输入（至少其一）：
+ *   - imageUrls：班级群作业通知的截图（可能含寒暄、表情、接龙），走视觉模型
+ *   - text：家长直接粘贴的作业文字，走文本模型（更快更稳，优先推荐）
  * 要求模型只保留可执行的作业事项，保留页码/遍数/日期等关键要求。
  * @returns {{ title, note, groups: Array<{subject:number, items:string[]}> }}
  */
-async function recognizeAssignment(imageUrls) {
+async function recognizeAssignment({ imageUrls, text } = {}) {
   const provider = getProvider();
-  const prompt = `请从这些图片中提取老师布置的作业，整理成打卡任务清单。图片可能是班级群聊天截图、作业通知或黑板作业。
+  const hasText = typeof text === 'string' && text.trim().length > 0;
+  const hasImages = Array.isArray(imageUrls) && imageUrls.length > 0;
+  if (!hasText && !hasImages) {
+    throw new Error('请提供作业截图或粘贴作业文字');
+  }
+
+  const sourceDesc = hasText
+    ? `下面是老师布置作业的内容（家长从班级群/通知里粘贴，可能混有寒暄、表情、接龙）：\n"""\n${text.trim().slice(0, 4000)}\n"""`
+    : '请从这些图片中提取老师布置的作业。图片可能是班级群聊天截图、作业通知或黑板作业。';
+
+  const prompt = `${sourceDesc}
+请把它整理成打卡任务清单。
 
 要求：
 1. 按学科分组：subject 填 1=语文 2=数学 3=英语 0=通用（跳绳、劳动、整理书包等非学科任务）4=其他学科
@@ -531,10 +544,19 @@ async function recognizeAssignment(imageUrls) {
 { "title": "如：10/28 作业", "note": "老师的重要提醒，没有则空字符串",
   "groups": [ { "subject": 1, "items": ["任务一", "任务二"] } ] }`;
 
-  const raw = await provider.chatVision(toAbsoluteUrls(imageUrls), prompt);
+  // 纯文字走文本模型；有图走视觉模型（文字+图都有时以图为准，文字作补充上下文）
+  let raw;
+  if (hasImages) {
+    raw = await provider.chatVision(toAbsoluteUrls(imageUrls), prompt);
+  } else {
+    raw = await provider.chatText(prompt, {
+      system: '你是严谨的小学教研助手，只输出 JSON，不编造作业内容。',
+      temperature: 0.2,
+    });
+  }
   const parsed = BaseProvider.extractJson(raw);
   if (!parsed || typeof parsed !== 'object') {
-    throw new Error('作业识别失败，请重新拍摄');
+    throw new Error('作业识别失败，请重新提交');
   }
 
   const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
@@ -548,7 +570,7 @@ async function recognizeAssignment(imageUrls) {
     .filter((g) => g.items.length);
 
   if (!groups.length) {
-    throw new Error('没有识别出作业任务，请确认拍的是作业内容');
+    throw new Error('没有识别出作业任务，请确认提交的是作业内容');
   }
   return {
     title: clip(parsed.title, 128) || null,

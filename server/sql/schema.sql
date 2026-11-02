@@ -232,7 +232,8 @@ CREATE TABLE IF NOT EXISTS `assignment` (
   `title`       VARCHAR(128) DEFAULT NULL COMMENT '任务单标题，如 10/28 作业',
   `note`        VARCHAR(255) DEFAULT NULL COMMENT '老师的重要提醒',
   `image_urls`  JSON         DEFAULT NULL COMMENT '原始作业截图',
-  `image_hash`  CHAR(64)     DEFAULT NULL COMMENT '图片指纹，幂等用',
+  `source_text` TEXT         DEFAULT NULL COMMENT '家长粘贴的作业文字（与截图二选一）',
+  `image_hash`  CHAR(64)     DEFAULT NULL COMMENT '内容指纹（截图或文字），幂等用',
   `status`      TINYINT      NOT NULL DEFAULT 0 COMMENT '0=识别中 1=可用 2=识别失败',
   `error`       VARCHAR(255) DEFAULT NULL,
   `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -254,3 +255,7 @@ CREATE TABLE IF NOT EXISTS `assignment_item` (
   `done_at`       DATETIME     DEFAULT NULL,
   INDEX idx_assignment (`assignment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='作业任务明细';
+
+-- 已上线库补列：CREATE TABLE IF NOT EXISTS 不会给旧表加列，靠这条 ALTER 补齐。
+-- 全新库会因列已存在报重复列，migrate.js 对非致命错误只记 warn 不中断，可放心重复执行。
+ALTER TABLE `assignment` ADD COLUMN `source_text` TEXT DEFAULT NULL COMMENT '家长粘贴的作业文字（与截图二选一）' AFTER `image_urls`;

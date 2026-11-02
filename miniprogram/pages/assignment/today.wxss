@@ -271,3 +271,102 @@
 .ops__again--active {
   opacity: 0.6;
 }
+
+/* ---------- 粘贴文字（主要方式） ---------- */
+.compose {
+  margin: var(--space-md) var(--space-lg) 0;
+  padding: var(--space-lg);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.compose__input {
+  width: 100%;
+  height: 260rpx;
+  padding: 20rpx 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.compose__placeholder {
+  color: var(--text-quaternary);
+}
+
+.compose__count {
+  margin-top: 8rpx;
+  align-self: flex-end;
+  font-size: var(--fs-tiny);
+  color: var(--text-quaternary);
+}
+
+.compose__btn {
+  margin-top: var(--space-sm);
+  height: 92rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--text-on-brand);
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(224, 163, 46, 0.28);
+  transition: opacity 0.18s ease;
+}
+
+.compose__btn--active {
+  opacity: 0.86;
+}
+
+.compose__btn--disabled {
+  background: var(--progress-track);
+  color: var(--text-quaternary);
+  box-shadow: none;
+}
+
+.compose__divider {
+  margin: var(--space-md) 0 var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  color: var(--text-quaternary);
+  font-size: var(--fs-tiny);
+}
+
+.compose__divider::before,
+.compose__divider::after {
+  content: '';
+  flex: 1;
+  height: 2rpx;
+  background: var(--progress-track);
+}
+
+.compose__photo {
+  height: 80rpx;
+  border-radius: var(--radius-pill);
+  border: 2rpx dashed var(--border);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compose__photo--active {
+  opacity: 0.7;
+}
+
+.compose__tip {
+  margin-top: var(--space-sm);
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--text-tertiary);
+}

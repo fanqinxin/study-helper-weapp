@@ -1,10 +1,10 @@
 /**
  * 今日作业 · 闯关清单
  *
- * 家长把老师布置的作业（班级群截图/通知）拍下来上传，
+ * 家长把老师布置的作业交上来：粘贴班级群文字（主要方式）或拍照截图（辅助），
  * AI 按学科整理成可逐项打勾的任务清单；全部完成 = 闯关成功。
  *
- * 识别是长耗时视觉调用：入队立即返回，这里轮询 status（与教材识别同一套模式）。
+ * 识别是长耗时调用：入队立即返回，这里轮询 status（与教材识别同一套模式）。
  */
 const api = require('../../utils/api');
 const { getUser, ensureLogin } = require('../../utils/auth');
@@ -57,6 +57,8 @@ Page({
     percent: 0,
     /** 上传中（选图+传图） */
     uploading: false,
+    /** 粘贴的作业文字 */
+    draftText: '',
     /** AI 识别中 */
     parsing: false,
     parseSeconds: 0,
@@ -129,7 +131,47 @@ Page({
     });
   },
 
-  /** ===== 上传作业截图 ===== */
+  /** ===== 提交作业 ===== */
+
+  /** 粘贴文字输入 */
+  onDraftInput(e) {
+    this.setData({ draftText: e.detail.value || '' });
+  },
+
+  /** 把粘贴的文字交给 AI 整理成任务单（主要方式：比拍照清楚，识别也更稳） */
+  async onSubmitText() {
+    if (this.data.uploading || this.data.parsing) return;
+    const text = (this.data.draftText || '').trim();
+    if (!text) {
+      wx.showToast({ title: '先粘贴老师布置的作业', icon: 'none' });
+      return;
+    }
+
+    this.setData({ uploading: true, parsing: true, parseSeconds: 0, assignment: null });
+    try {
+      const res = await api.createAssignment({ text, taskDate: todayStr() });
+      if (!res || !res.assignmentId) {
+        this.setData({ uploading: false, parsing: false });
+        wx.showToast({ title: '提交失败，请重试', icon: 'none' });
+        return;
+      }
+      if (app.refreshQuota) app.refreshQuota();
+
+      // 命中幂等且已识别完成：直接刷新
+      if (res.status === 'ready') {
+        this.setData({ uploading: false });
+        await this.load();
+        return;
+      }
+      this.setData({ uploading: false });
+      this.pollParse(res.assignmentId);
+    } catch (e) {
+      // request 层已提示（额度不足会跳拦截页）
+      this.setData({ uploading: false, parsing: false });
+    }
+  },
+
+  /** ===== 拍照识别（辅助方式） ===== */
 
   async onUpload() {
     if (this.data.uploading || this.data.parsing) return;

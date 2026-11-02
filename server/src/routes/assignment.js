@@ -15,9 +15,9 @@ const { rateLimit } = require('../utils/redis');
 const router = express.Router();
 
 /**
- * 提交作业截图
- * body: { imageUrls: string[], taskDate?: 'YYYY-MM-DD' }
- * 每次消耗 1 次额度；同一组截图重复提交幂等返回，不重复扣费。
+ * 提交作业内容（粘贴文字为主，截图为辅）
+ * body: { text?: string, imageUrls?: string[], taskDate?: 'YYYY-MM-DD' }
+ * 每次消耗 1 次额度；同一份内容重复提交幂等返回，不重复扣费。
  */
 router.post(
   '/assignment',
@@ -30,6 +30,7 @@ router.post(
   wrap(async (req, res) => {
     const body = req.body || {};
     ok(res, await assignmentService.createAssignment(req.uid, {
+      text: body.text,
       imageUrls: body.imageUrls,
       taskDate: body.taskDate,
     }));
